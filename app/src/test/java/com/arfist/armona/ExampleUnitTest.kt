@@ -1,4 +1,4 @@
-package com.example.armona
+package com.arfist.armona
 
 import org.junit.Test
 
