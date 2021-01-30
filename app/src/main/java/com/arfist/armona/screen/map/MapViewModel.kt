@@ -1,35 +1,48 @@
 package com.arfist.armona.screen.map
 
-import android.location.Location
-import android.widget.Toast
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.maps.model.LatLng
+import android.app.Application
+import androidx.lifecycle.*
+import com.arfist.armona.services.Direction
+import com.arfist.armona.services.LocationRepository
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.lang.Exception
 
-class MapViewModel :ViewModel() {
+class MapViewModel(application: Application) :AndroidViewModel(application){
 
-    private var _lastKnownLocation = MutableLiveData<LatLng>()
-    val lastLocation: LiveData<LatLng> get() = _lastKnownLocation
+    private val locationRepository = LocationRepository.getInstance(application.applicationContext)
+
+    val lastLocation = locationRepository.currentLocation
+
+    val likelyPlaces = locationRepository.likelyPlaceNames
 
     private var _permissionGranted = MutableLiveData<Boolean>()
     val permissionGranted: LiveData<Boolean> get() = _permissionGranted
 
-    fun onPermissionGranted(mapRepository: MapRepository) {
-        Timber.i("Permission Granted")
+    private var _direction = MutableLiveData<Direction>()
+    val direction: LiveData<Direction> get() = _direction
 
-        _permissionGranted.value = true
-        val location = mapRepository.getLocation()
-        if (location != null) {
-            _lastKnownLocation.value = LatLng(location.latitude, location.longitude)
-        } else {
-            _lastKnownLocation.value = null
-        }
+    fun onPermissionGranted() {
+        Timber.i("onPermissionGranted")
+        locationRepository.startLocationUpdates()
+        locationRepository.getSurrounding()
     }
 
     fun onPermissionDenied() {
+        Timber.i("onPermissionDenied")
+        locationRepository.stopLocationUpdates()
         _permissionGranted.value = false
+    }
+
+    fun getDirection(destination: String) {
+        Timber.i("Get direction")
+        viewModelScope.launch {
+            try {
+                _direction.value = locationRepository.getDirection(destination = destination)
+                Timber.i("get direction success")
+            } catch (e: Exception) {
+                Timber.e(e)
+            }
+        }
     }
 }

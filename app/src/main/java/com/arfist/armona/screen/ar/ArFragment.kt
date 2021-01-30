@@ -7,17 +7,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
 import com.arfist.armona.R
 import com.arfist.armona.databinding.ArFragmentBinding
+import com.arfist.armona.screen.map.MapViewModel
 
 class ArFragment : Fragment() {
 
-    companion object {
-        fun newInstance() = ArFragment()
-    }
-
     private lateinit var viewModel: ArViewModel
+    private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
 
     override fun onCreateView(
