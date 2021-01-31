@@ -12,20 +12,21 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
 
-    private val TAG = "MainActivity";
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        if(OpenCVLoader.initDebug()) {
-            Log.d(TAG,"Load OpenCV successful");
-        }
-        else {
-            Log.d(TAG,"Load OpenCV fail");
-        }
 
         // Logger
         Timber.plant(Timber.DebugTree())
+
+        // Init OpenCV
+        if(OpenCVLoader.initDebug()) {
+            Timber.i("Load OpenCV successful");
+        }
+        else {
+            Timber.d("Load OpenCV fail");
+        }
+
 
         // Init for PlaceSDK
         Places.initialize(applicationContext, BuildConfig.mapsApiKey)
