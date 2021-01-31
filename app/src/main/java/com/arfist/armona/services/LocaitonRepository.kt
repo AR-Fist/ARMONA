@@ -6,7 +6,6 @@ import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.arfist.armona.BuildConfig
-import com.arfist.armona.getLatLngFormat
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -26,7 +25,10 @@ import java.util.concurrent.TimeUnit
 // This will be ref from while-in-use-location, LocationUpdateForeground, LocationUpdateBackGround
 class LocationRepository private constructor(context: Context){
 
+    // These object only created once at the runtime
     companion object {
+
+        // Only one LocationRepository would exist
         @Volatile private var INSTANCE: LocationRepository? = null
 
         fun getInstance(context: Context): LocationRepository {
@@ -38,10 +40,6 @@ class LocationRepository private constructor(context: Context){
         const val BASE_URL = "https://maps.googleapis.com"
         const val DIRECTION_API = "/maps/api/directions/json"
         //---
-    }
-
-    init {
-        Places.initialize(context, BuildConfig.mapsApiKey)
     }
 
     private var _currentLocation = MutableLiveData<Location>()
@@ -87,15 +85,18 @@ class LocationRepository private constructor(context: Context){
         .baseUrl(BASE_URL)
         .build()
 
+    // REST service declaration
     private val retrofitService: MapApi by lazy {
         retrofit.create(MapApi::class.java)
     }
 
+    // Client for surrounding places
     private val placesClient = Places.createClient(context)
 
-    private var _likelyPlaceNames = MutableLiveData<MutableList<String>>()
-    val likelyPlaceNames: LiveData<MutableList<String>>
-        get() = _likelyPlaceNames
+    //
+    private var _surroundPlaceNames = MutableLiveData<MutableList<String>>()
+    val surroundPlaceNames: LiveData<MutableList<String>>
+        get() = _surroundPlaceNames
 
     fun startLocationUpdates() {
         Timber.i("Start location update")
@@ -113,8 +114,8 @@ class LocationRepository private constructor(context: Context){
         fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
-    suspend fun getDirection(origin: String = _currentLocation.value!!.getLatLngFormat(), destination: String): Direction {
-        Timber.i("Get direction")
+    suspend fun getDirection(origin: String, destination: String): Direction {
+        Timber.i("Get direction: ${origin}, ${destination}.")
         return retrofitService.getDirection(origin, destination)
     }
 
@@ -129,9 +130,9 @@ class LocationRepository private constructor(context: Context){
                 if (task.isSuccessful && task.result != null) {
                     val likelyPlaces = task.result
 
-                    _likelyPlaceNames.value = ArrayList()
+                    _surroundPlaceNames.value = ArrayList()
                     for (placeLikelihood in likelyPlaces.placeLikelihoods) {
-                        _likelyPlaceNames.value?.add(placeLikelihood.place.name!!)
+                        _surroundPlaceNames.value?.add(placeLikelihood.place.name!!)
                     }
                 }
             }

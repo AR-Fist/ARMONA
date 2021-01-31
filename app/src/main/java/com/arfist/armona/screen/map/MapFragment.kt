@@ -1,9 +1,8 @@
 package com.arfist.armona.screen.map
 
-import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
-import androidx.fragment.app.Fragment
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +10,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
+import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
+import com.arfist.armona.MainActivity.Companion.permissionList
 import com.arfist.armona.R
 import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.hasPermission
@@ -22,7 +24,6 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.maps.android.PolyUtil
 import timber.log.Timber
 
@@ -34,6 +35,16 @@ class MapFragment : Fragment() {
 
     private val mapViewModel: MapViewModel by activityViewModels()
 
+    private var isPermissionGranted = false
+
+    private var direction: Direction? = null
+
+    private var followLocation = false
+
+    companion object {
+        private const val DEFAULT_ZOOM = 15
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,19 +54,20 @@ class MapFragment : Fragment() {
 
         binding = DataBindingUtil.inflate(inflater, R.layout.map_fragment, container, false)
 
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync {
+            Timber.i("Map ready")
+
+            googleMap = it
+            updateGoogleMapsUI()
+        }
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Timber.i("onViewCreated")
         super.onViewCreated(view, savedInstanceState)
-        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
-        mapFragment?.getMapAsync {
-            Timber.i("Map ready")
-            // TODO There is a problem with lifecycle
-            googleMap = it
-            getPermission()
-        }
 
         binding.buttonMapAr.setOnClickListener { viewGet: View ->
             viewGet.findNavController()
@@ -69,39 +81,39 @@ class MapFragment : Fragment() {
                     "Can not retrieve current location",
                     Toast.LENGTH_LONG
                 ).show()
-            } else {
+            }
+            else if(followLocation && ::googleMap.isInitialized){
                 googleMap.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
                         LatLng(location.latitude, location.longitude),
                         DEFAULT_ZOOM.toFloat()
-                    )
-                )
+                    ))
             }
         })
 
         mapViewModel.permissionGranted.observe(viewLifecycleOwner, {
-            updateGoogleUI(it)
+            if(it && ::googleMap.isInitialized) {
+                isPermissionGranted = true
+                updateGoogleMapsUI()
+            } else if(!it) {
+                getPermission()
+            }
         })
 
         mapViewModel.direction.observe(viewLifecycleOwner, {
-            drawPolyline(it)
+            if(::googleMap.isInitialized) {
+                direction = it
+                drawPolyline()
+            }
+        })
+
+        mapViewModel.followLocation.observe(viewLifecycleOwner, {
+            followLocation = it
         })
 
     }
 
-    companion object {
-        private const val PERMISSION_REQUEST_MAP = 1
-        private const val DEFAULT_ZOOM = 15
-    }
-
-    /**
-     * Check if all permission is granted if not request it
-     */
-    private val permissionList = arrayListOf(
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    )
-
+    // Check which permission is not granted, then ask for it
     private fun getPermission() {
         Timber.i("Grant permission")
 
@@ -121,9 +133,7 @@ class MapFragment : Fragment() {
         }
     }
 
-    /**
-     *  requestPermission callback
-     */
+    // Callback when permission requested
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -141,13 +151,14 @@ class MapFragment : Fragment() {
         }
     }
 
-    private fun updateGoogleUI(permissionGranted: Boolean) {
+    // Update google map
+    private fun updateGoogleMapsUI() {
         Timber.i("updateGoogleUI")
         try {
-            if (permissionGranted) {
+            if (isPermissionGranted) {
                 googleMap.isMyLocationEnabled = true
                 googleMap.uiSettings?.isMyLocationButtonEnabled = true
-                mapViewModel.direction.value?.let { direction -> drawPolyline(direction) }
+                drawPolyline()
             } else {
                 googleMap.isMyLocationEnabled = false
                 googleMap.uiSettings?.isMyLocationButtonEnabled = false
@@ -155,13 +166,17 @@ class MapFragment : Fragment() {
             }
         } catch (e: SecurityException) {
             Timber.e(e)
+            getPermission()
+        } catch (e: Exception) {
+            Timber.e(e)
         }
     }
 
-    private fun drawPolyline(direction: Direction) {
+    // Draw direction on map
+    private fun drawPolyline() {
         Timber.i("Draw polyline")
         val paths: MutableList<List<LatLng>> = ArrayList()
-        for (step in direction.routes?.get(0)?.legs?.get(0)?.steps!!) {
+        for (step in direction?.routes?.get(0)?.legs?.get(0)?.steps!!) {
             paths.add(PolyUtil.decode(step.polyline?.points))
         }
 
@@ -172,5 +187,51 @@ class MapFragment : Fragment() {
                 .color(Color.GREEN)
             )
         }
+    }
+
+    override fun onStart() {
+        Timber.i("onStart")
+        super.onStart()
+    }
+
+    override fun onResume() {
+        Timber.i("onResume")
+        super.onResume()
+        updateGoogleMapsUI()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        Timber.i("onSave")
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onPause() {
+        Timber.i("onPause")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        Timber.i("onStop")
+        super.onStop()
+    }
+
+    override fun onDestroyView() {
+        Timber.i("onDestroyView")
+        super.onDestroyView()
+    }
+
+    override fun onDestroy() {
+        Timber.i("onDestroy")
+        super.onDestroy()
+    }
+
+    override fun onDetach() {
+        Timber.i("onDetach")
+        super.onDetach()
+    }
+
+    override fun onAttach(context: Context) {
+        Timber.i("onAttach")
+        super.onAttach(context)
     }
 }

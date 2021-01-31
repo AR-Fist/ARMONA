@@ -1,5 +1,6 @@
 package com.arfist.armona
 
+import android.Manifest
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -29,30 +30,11 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp()
     }
 
-
-//    fun createLocationRequest() {
-//        val locationRequest = LocationRequest.create()?.apply {
-//            interval = 10000
-//            fastestInterval = 5000
-//            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-//        }
-//
-//        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest!!)
-//        val client: SettingsClient = LocationServices.getSettingsClient(this)
-//        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
-//
-//        task.addOnSuccessListener { locationSettingsResponse ->
-//
-//        }
-//        task.addOnFailureListener { e ->
-//            if (e is ResolvableApiException) {
-//                try {
-//                    e.startResolutionForResult(this@MainActivity, 0)
-//                } catch (sendEx: IntentSender.SendIntentException) {
-//
-//                }
-//            }
-//        }
-//    }
-
+    companion object{
+        val permissionList = arrayListOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        const val PERMISSION_REQUEST_MAP = 1
+    }
 }
