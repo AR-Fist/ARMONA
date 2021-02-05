@@ -83,8 +83,7 @@ class TitleFragment : Fragment() {
 
         // Specify the types of place data to return.
         autocompleteFragment.setPlaceFields(listOf(Place.Field.ID, Place.Field.NAME))
-//        autocompleteFragment.setCountry("Thailand")
-
+        autocompleteFragment.setHint("Enter destination")git 
         // Set up a PlaceSelectionListener to handle the response.
         autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {

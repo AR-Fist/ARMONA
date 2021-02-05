@@ -29,45 +29,55 @@
             android:textColor="#000000"
             android:textSize="68sp" />
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/autocomplete_fragment"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+            android:layout_width="@dimen/search_box_width"
+            android:layout_height="@dimen/search_box_height"
+            android:layout_margin="15sp" />
 
-            <fragment
-                android:id="@+id/autocomplete_fragment"
-                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </androidx.cardview.widget.CardView>
+        <!--        <FrameLayout-->
+<!--            android:id="@+id/background"-->
+<!--            android:layout_width="@dimen/search_box_width"-->
+<!--            android:layout_height="@dimen/search_box_height">-->
 
-        <LinearLayout
-            android:id="@+id/search_box"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="16sp"
-            android:orientation="horizontal">
+<!--            <androidx.fragment.app.FragmentContainerView-->
+<!--                android:id="@+id/autocomplete_fragment"-->
+<!--                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_margin="15sp" />-->
+<!--        </FrameLayout>-->
 
-            <EditText
-                android:id="@+id/text_destination"
-                android:layout_width="@dimen/search_box_width"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:hint="@string/hint_destination"
-                android:importantForAutofill="no"
-                android:inputType="textPersonName"
-                android:textSize="12sp" />
+        <!--        <LinearLayout-->
+<!--            android:id="@+id/search_box"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:layout_margin="16sp"-->
+<!--            android:orientation="horizontal">-->
 
-            <ImageView
-                android:id="@+id/imageView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:contentDescription="@string/text_description_search_icon"
-                android:src="@android:drawable/ic_menu_search" />
+<!--            <EditText-->
+<!--                android:id="@+id/autocomplete_fragment"-->
+<!--                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"-->
+<!--                android:layout_width="@dimen/search_box_width"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_gravity="center"-->
+<!--                android:ems="10"-->
+<!--                android:hint="@string/hint_destination"-->
+<!--                android:importantForAutofill="no"-->
+<!--                android:inputType="textPersonName"-->
+<!--                android:textSize="12sp" />-->
 
-        </LinearLayout>
+<!--            <ImageView-->
+<!--                android:id="@+id/imageView"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:contentDescription="@string/text_description_search_icon"-->
+<!--                android:src="@android:drawable/ic_menu_search" />-->
+
+<!--        </LinearLayout>-->
 
         <Button
             android:id="@+id/button_ar"

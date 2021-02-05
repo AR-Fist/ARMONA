@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="search_box_width">218sp</dimen>
+    <dimen name="search_box_width">258sp</dimen>
     <dimen name="button_corner_radius">12sp</dimen>
     <dimen name="floting_button_margin">30dp</dimen>
+    <dimen name="search_box_height">48sp</dimen>
 </resources>
