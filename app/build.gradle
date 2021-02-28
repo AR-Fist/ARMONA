@@ -43,6 +43,13 @@ android {
     buildFeatures {
         dataBinding true
     }
+    sourceSets {
+        main {
+            jni {
+                srcDirs 'src\\main\\jni', 'src\\main\\jniLibs'
+            }
+        }
+    }
 }
 
 dependencies {
@@ -55,6 +62,9 @@ dependencies {
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0'
+
+    // OpenCV
+    implementation project(path: ':openCVLibrary3410')
 
     // ViewModel
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'

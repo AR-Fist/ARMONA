@@ -1,13 +1,14 @@
 package com.arfist.armona
 
+import androidx.appcompat.app.AppCompatActivity
 import android.Manifest
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
+import org.opencv.android.OpenCVLoader
 import androidx.navigation.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.libraries.places.api.Places
 import timber.log.Timber
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,6 +18,15 @@ class MainActivity : AppCompatActivity() {
 
         // Logger
         Timber.plant(Timber.DebugTree())
+
+        // Init OpenCV
+        if(OpenCVLoader.initDebug()) {
+            Timber.i("Load OpenCV successful");
+        }
+        else {
+            Timber.d("Load OpenCV fail");
+        }
+
 
         // Init for PlaceSDK
         Places.initialize(applicationContext, BuildConfig.mapsApiKey)
