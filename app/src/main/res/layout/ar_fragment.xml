@@ -13,13 +13,12 @@
         android:layout_height="match_parent"
         tools:context=".screen.ar.ArFragment">
 
-        <TextView
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:gravity="center"
-            android:text="AR HERE"
-            android:textSize="36sp" />
+            android:gravity="center" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/button_ar_map"
