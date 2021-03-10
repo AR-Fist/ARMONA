@@ -13,12 +13,14 @@
         android:layout_height="match_parent"
         tools:context=".screen.ar.ArFragment">
 
-        <androidx.camera.view.PreviewView
-            android:id="@+id/previewView"
+        <ImageView
+            android:id="@+id/image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:gravity="center" />
+            android:contentDescription="Imageview"
+            android:visibility="visible"
+            android:rotation="90"
+            tools:ignore="MissingConstraints" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/button_ar_map"
