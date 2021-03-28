@@ -10,8 +10,13 @@ import androidx.lifecycle.MutableLiveData
 import com.arfist.armona.Quaternion
 import com.arfist.armona.cross
 import com.arfist.armona.normalize
-import com.arfist.armona.services.LocationRepository
-import com.arfist.armona.services.SensorsRepository
+import com.arfist.armona.services.*
+import com.arfist.armona.toDouble
+import koma.create
+import koma.extensions.get
+import koma.extensions.set
+import koma.matrix.Matrix
+import koma.zeros
 import timber.log.Timber
 import kotlin.math.*
 
@@ -33,13 +38,17 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
     // Base sensors but uncalibrated
 //    val uncalibAccelerometer = sensorsRepository.uncalibratedAccelerometer
-//    val uncalibGyrometer = sensorsRepository.uncalibratedGyroscope
+//    val uncalibGyroscope = sensorsRepository.uncalibratedGyroscope
 //    val uncalibMagnetometer = sensorsRepository.uncalibratedMagnetometer
+
+    // Filters
+    private val complementaryFilter = ComplementaryFilter(0.98F)
+    private val complementaryFilterGravity = ComplementaryFilter(0.98F)
+//    private val kalmanFilter1D = KalmanFilter1D()
+    private val extendedKalmanFilter = ExtendedKalmanFilter()
 
     private var lastTimestamp: Long = 0
     private var dt: Float = 0.0F
-    private val timeConstant = 0.5
-    private val epsilon: Float = 1.0E-9F
     private val nanosec2sec: Float = 1/1000000000F
 
     private val _complementaryAngle = MutableLiveData<FloatArray>()
@@ -56,80 +65,86 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         dt = (timestamp - lastTimestamp)*nanosec2sec
         Log.i("Time", "$dt $timestamp $lastTimestamp")
         lastTimestamp = timestamp
-        val rotationMatrix = FloatArray(9)
+        val androidRotationMatrix = FloatArray(9)
         try {
             // Android's
             SensorManager.getRotationMatrix(
-                rotationMatrix,
+                androidRotationMatrix,
                 null,
                 accelerometer.value!!.values,
                 magnetometer.value!!.values
             )
 
             val orientationAngles = FloatArray(3)
-            SensorManager.getOrientation(rotationMatrix, orientationAngles)
+            SensorManager.getOrientation(androidRotationMatrix, orientationAngles)
             Log.i(
                 "GoogleOrientationAngles",
                 "${orientationAngles[0]}, ${orientationAngles[1]}, ${orientationAngles[2]}, $timestamp"
             )
-
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
+        try {
             // Implemented
-            val myRotationMatrix = calculateRotationMatrix(9)
-            val myRotationVector = myRotationMatrix?.let { calculateQuaternionFromRotationMatrix(it) }
+            val myRotationMatrix = calculateRotationMatrix(accelerometer.value!!.values, magnetometer.value!!.values)
+            val myRotationVector = calculateQuaternionFromRotationMatrix(myRotationMatrix)
+            val myOrientationAngles = calculateMyOrientationAngle(myRotationMatrix)
 
+            val myGravityRotationMatrix = calculateRotationMatrix(gravity.value!!.values, magnetometer.value!!.values)
+            val myGravityRotationVector = calculateQuaternionFromRotationMatrix(myGravityRotationMatrix)
+            val myGravityOrientationAngles = calculateMyOrientationAngle(myGravityRotationMatrix)
+
+            gyroscope.value?.values?.let {
+                val gyroscopeDouble = it.toDouble()
+                complementaryFilter.filter(it, myRotationVector, dt)
+                complementaryFilterGravity.filter(it, myGravityRotationVector, dt)
+
+                extendedKalmanFilter.predict(gyroscopeDouble, dt)
+                extendedKalmanFilter.update((accelerometer.value!!.values).toDouble(), (magnetometer.value!!.values).toDouble())
+            }
+            val complementaryEuler = complementaryFilter.rotationQuaternion.toEuler()
+            val oldComplementaryEuler = complementaryFilter.rotationQuaternion.oldToEuler()
+            val gravityComplementaryEuler = complementaryFilterGravity.rotationQuaternion.toEuler()
+            val xHat = extendedKalmanFilter.xHat[0..3, 0]
+            val extendedKalmanEuler = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler()
             Log.i(
-                "MyRotationQuaternion",
-                "${myRotationVector?.x}, ${myRotationVector?.y}, ${myRotationVector?.z}, ${myRotationVector?.w}, $timestamp"
+                "myComplementary",
+                "${complementaryEuler[0]}, ${complementaryEuler[1]}, ${complementaryEuler[2]}, $timestamp"
             )
-
-            val myRotationAngle = myRotationVector?.let { quaternionToEuler(it) }
             Log.i(
-                "MyRotationAngle",
-                "${myRotationAngle?.get(0)}, ${myRotationAngle?.get(1)}, ${myRotationAngle?.get(2)}, $timestamp"
+                "myOldComplementary",
+                "${oldComplementaryEuler[0]}, ${oldComplementaryEuler[1]}, ${oldComplementaryEuler[2]}, $timestamp"
             )
-
-            val myOrientationAngles = myRotationMatrix?.let { calculateMyOrientationAngle(it) }
             Log.i(
-                "MyOrientationAngles",
-                "${myOrientationAngles?.get(0)}, ${myOrientationAngles?.get(1)}, ${myOrientationAngles?.get(2)}, $timestamp"
+                "myGravityComplementary",
+                "${gravityComplementaryEuler[0]}, ${gravityComplementaryEuler[1]}, ${gravityComplementaryEuler[2]}, $timestamp"
             )
-
-            val complementaryQuaternion = complementaryFilter(myRotationVector)
             Log.i(
-                "MyComplementaryQuaternion",
-                "${complementaryQuaternion?.x}, ${complementaryQuaternion?.y}, ${complementaryQuaternion?.z}, ${complementaryQuaternion?.w}, $timestamp"
-            )
-
-            _complementaryAngle.value = complementaryQuaternion?.let { quaternionToEuler(it) }
-            Log.i(
-                "MyComplementaryAngle",
-                "${complementaryAngle.value!![0]}, ${complementaryAngle.value!![1]}, ${complementaryAngle.value!![2]}, $timestamp"
+                "myExtendedKalman",
+                "${extendedKalmanEuler[0]}, ${extendedKalmanEuler[1]}, ${extendedKalmanEuler[2]}, $timestamp"
             )
 
         } catch (e: Exception) {
             Timber.e(e)
         }
     }
-    private var lastRotationQuaternion = Quaternion(0F, 0F, 0F, 0F)
-    private fun complementaryFilter(rotationVectorAccelerationMagnetic: Quaternion?): Quaternion? {
-//        val alpha =  timeConstant / (timeConstant+dt)
-        val alpha = 0.98F
-        Log.i("alpha", "${alpha}, ${dt}, ${timeConstant}, ${nanosec2sec}")
-        if (rotationVectorAccelerationMagnetic == null) return null
-        val rotationVectorGyroscope = gyroscopeRotationQuaternion(lastRotationQuaternion) ?: return null
-        Log.i("GyroscopeOnly", "${rotationVectorGyroscope.x}, ${rotationVectorGyroscope.y}, ${rotationVectorGyroscope.z}, ${rotationVectorGyroscope.w}, $lastTimestamp")
-
-        val rotationVecGyroAngle = quaternionToEuler(rotationVectorGyroscope)
-        Log.i("GyroscopeAngle", "${rotationVecGyroAngle[0]}, ${rotationVecGyroAngle[1]}, ${rotationVecGyroAngle[2]}, $lastTimestamp")
-        val scaledVectorGyroscope = rotationVectorGyroscope.multiply(alpha.toFloat())
-        val scaledVectorAccMag = rotationVectorAccelerationMagnetic.multiply((1-alpha).toFloat())
-        val result = scaledVectorAccMag.add(scaledVectorGyroscope)
-        lastRotationQuaternion = Quaternion(result.x, result.y, result.z, result.w)
-        return result
-    }
-    private fun kalmanFilter() {
-
-    }
+//    private var lastRotationQuaternion = Quaternion(0F, 0F, 0F, 0F)
+//    private fun complementaryFilter(rotationVectorAccelerationMagnetic: Quaternion?): Quaternion? {
+////        val alpha =  timeConstant / (timeConstant+dt)
+//        val alpha = 0.98F
+//        Log.i("alpha", "${alpha}, ${dt}, ${timeConstant}, ${nanosec2sec}")
+//        if (rotationVectorAccelerationMagnetic == null) return null
+//        val rotationVectorGyroscope = gyroscopeRotationQuaternion(lastRotationQuaternion) ?: return null
+//        Log.i("GyroscopeOnly", "${rotationVectorGyroscope.x}, ${rotationVectorGyroscope.y}, ${rotationVectorGyroscope.z}, ${rotationVectorGyroscope.w}, $lastTimestamp")
+//
+//        val rotationVecGyroAngle = quaternionToEuler(rotationVectorGyroscope)
+//        Log.i("GyroscopeAngle", "${rotationVecGyroAngle[0]}, ${rotationVecGyroAngle[1]}, ${rotationVecGyroAngle[2]}, $lastTimestamp")
+//        val scaledVectorGyroscope = rotationVectorGyroscope * alpha.toFloat()
+//        val scaledVectorAccMag = rotationVectorAccelerationMagnetic * ((1-alpha).toFloat())
+//        val result = scaledVectorAccMag + (scaledVectorGyroscope)
+//        lastRotationQuaternion = Quaternion(result.x, result.y, result.z, result.w)
+//        return result
+//    }
 
     fun quaternionToEuler(quaternion: Quaternion): FloatArray {
         // Euler angles as roll, pitch, yaw
@@ -148,95 +163,76 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         return euler
     }
 
-    fun gyroscopeRotationQuaternion(lastRotationVector: Quaternion): Quaternion? {
-        val gyroscopeValue = gyroscope.value?.values ?: return null
-        val magnitude = sqrt(gyroscopeValue[0]*gyroscopeValue[0] + gyroscopeValue[1]*gyroscopeValue[1] + gyroscopeValue[2]*gyroscopeValue[2])
-        Log.i("gyro_magnitude", "$magnitude, ${gyroscopeValue[0]}, ${gyroscopeValue[1]}, ${gyroscopeValue[2]}")
-        if(magnitude > epsilon) {
-            gyroscopeValue[0] /= magnitude
-            gyroscopeValue[1] /= magnitude
-            gyroscopeValue[2] /= magnitude
-        }
+//    fun gyroscopeRotationQuaternion(lastRotationVector: Quaternion): Quaternion? {
+//        val gyroscopeValue = gyroscope.value?.values ?: return null
+//        val magnitude = sqrt(gyroscopeValue[0]*gyroscopeValue[0] + gyroscopeValue[1]*gyroscopeValue[1] + gyroscopeValue[2]*gyroscopeValue[2])
+//        Log.i("gyro_magnitude", "$magnitude, ${gyroscopeValue[0]}, ${gyroscopeValue[1]}, ${gyroscopeValue[2]}")
+//        if(magnitude > epsilon) {
+//            gyroscopeValue[0] /= magnitude
+//            gyroscopeValue[1] /= magnitude
+//            gyroscopeValue[2] /= magnitude
+//        }
+//
+//        val theta = magnitude * dt
+//        val sintheta = sin(theta/2)
+//        val costheta = cos(theta/2)
+//        Log.i("gyro_2", "${gyroscopeValue[0]}, ${gyroscopeValue[1]}, ${gyroscopeValue[2]}, $theta")
+//        val quaternion = Quaternion(
+//            sintheta*gyroscopeValue[0],
+//            sintheta*gyroscopeValue[1],
+//            sintheta*gyroscopeValue[2],
+//            costheta)
+//
+//        return lastRotationVector * quaternion
+//    }
 
-        val theta = magnitude * dt
-        val sintheta = sin(theta/2)
-        val costheta = cos(theta/2)
-        Log.i("gyro_2", "${gyroscopeValue[0]}, ${gyroscopeValue[1]}, ${gyroscopeValue[2]}, $theta")
-        val quaternion = Quaternion(
-            sintheta*gyroscopeValue[0],
-            sintheta*gyroscopeValue[1],
-            sintheta*gyroscopeValue[2],
-            costheta)
-
-        return lastRotationVector.multiply(quaternion)
-    }
-
-    private fun calculateRotationMatrix(matrixSize: Int): FloatArray? {
+    private fun calculateRotationMatrix(gravity: FloatArray, magnetometer: FloatArray): Matrix<Double> {
         // TODO: in this case we will read acc as a gravity but it has to change later may use high-pass
-        if(matrixSize != 9 && matrixSize != 16) return null
-
-        val rotationMatrix = FloatArray(matrixSize)
-        val up = accelerometer.value!!.values
-        val magneto = magnetometer.value!!.values
+        val rotationMatrix = zeros(3, 3)
+        val up = gravity
+        val magneto = magnetometer
 
         // Calculate H that orthogonal to both magneto that point to north and up(result from accelerometer as upward opposite to graviity)  vectors by cross product
-        val east = magneto.cross(up) ?: return null
+        val east = magneto.cross(up)
         east.normalize()
         up.normalize()
 
         // Calculate N that direct to north but orthogonal to both H and A
-        val north = up.cross(east) ?: return null
+        val north = up.cross(east)
 
         // Assign value to the matrix
-        if (matrixSize == 9) {
-            rotationMatrix[0] = east[0]
-            rotationMatrix[1] = east[1]
-            rotationMatrix[2] = east[2]
-            rotationMatrix[3] = north[0]
-            rotationMatrix[4] = north[1]
-            rotationMatrix[5] = north[2]
-            rotationMatrix[6] = up[0]
-            rotationMatrix[7] = up[1]
-            rotationMatrix[8] = up[2]
-        } else if (matrixSize == 16) {
-            rotationMatrix[0] = east[0]
-            rotationMatrix[1] = east[1]
-            rotationMatrix[2] = east[2]
-            rotationMatrix[3] = 0F
-            rotationMatrix[4] = north[0]
-            rotationMatrix[5] = north[1]
-            rotationMatrix[6] = north[2]
-            rotationMatrix[7] = 0F
-            rotationMatrix[8] = up[0]
-            rotationMatrix[9] = up[1]
-            rotationMatrix[10] = up[2]
-            rotationMatrix[11] = 0F
-            rotationMatrix[12] = 0F
-            rotationMatrix[13] = 0F
-            rotationMatrix[14] = 0F
-            rotationMatrix[15] = 1F
-        }
+        rotationMatrix[0, 0..2] = create(doubleArrayOf(east[0].toDouble(), east[1].toDouble(), east[2].toDouble()))
+        rotationMatrix[1, 0..2] = create(doubleArrayOf(north[0].toDouble(), north[1].toDouble(), north[2].toDouble()))
+        rotationMatrix[2, 0..2] = create(doubleArrayOf(up[0].toDouble(), up[1].toDouble(), up[2].toDouble()))
+//        rotationMatrix[0] = east[0]
+//        rotationMatrix[1] = east[1]
+//        rotationMatrix[2] = east[2]
+//        rotationMatrix[3] = north[0]
+//        rotationMatrix[4] = north[1]
+//        rotationMatrix[5] = north[2]
+//        rotationMatrix[6] = up[0]
+//        rotationMatrix[7] = up[1]
+//        rotationMatrix[8] = up[2]
         return rotationMatrix
     }
 
-    private fun calculateMyOrientationAngle(rotationMatrix: FloatArray): FloatArray {
-        val angles = FloatArray(3)
+    private fun calculateMyOrientationAngle(rotationMatrix: Matrix<Double>): DoubleArray {
+        val angles = DoubleArray(3)
         // Tait bryan angle convention
-        angles[0] = atan2(rotationMatrix[1], rotationMatrix[4])
-        angles[1] = asin(-rotationMatrix[7])
-        angles[2] = atan2(-rotationMatrix[6], rotationMatrix[8])
+        angles[0] = atan2(rotationMatrix[0, 1], rotationMatrix[1, 1])
+        angles[1] = asin(-rotationMatrix[2, 1])
+        angles[2] = atan2(-rotationMatrix[2, 0], rotationMatrix[2, 2])
         return angles
     }
 
 
-    fun calculateQuaternionFromRotationMatrix(rotationMatrix: FloatArray): Quaternion? {
-        if (rotationMatrix.size != 9) return null
-        val w = sqrt(1 + rotationMatrix[0] + rotationMatrix[4] + rotationMatrix[8])/2
+    fun calculateQuaternionFromRotationMatrix(rotationMatrix: Matrix<Double>): Quaternion {
+        val w = sqrt(1 + rotationMatrix[0, 0] + rotationMatrix[1, 1] + rotationMatrix[2, 2])/2
         return Quaternion(
-            (rotationMatrix[7] - rotationMatrix[5]) / (4*w),
-            (rotationMatrix[2] - rotationMatrix[6]) / (4*w),
-            (rotationMatrix[3] - rotationMatrix[1]) / (4*w),
-            w
+            w.toFloat(),
+            ((rotationMatrix[2, 1] - rotationMatrix[1, 2]) / (4*w)).toFloat(),
+            ((rotationMatrix[0, 2] - rotationMatrix[2, 0]) / (4*w)).toFloat(),
+            ((rotationMatrix[1, 0] - rotationMatrix[0, 1]) / (4*w)).toFloat()
         )
     }
 }
