@@ -240,4 +240,18 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             ((rotationMatrix[1, 0] - rotationMatrix[0, 1]) / (4*w)).toFloat()
         )
     }
+      fun calculateArrowRotation() {
+        /**
+         * This method will be call every sensor update loop ie gyroscope, magnetometer,
+         * accelerometer and GPS only in arviewmodel not in map viewmodel as mapviewmodel
+         * not need this data
+         *
+         * For the arrow rotation
+         * 1. init arrow as 0 0 0 point to north tangent to surface (world frame)
+         * 2. rotate by initial bearing from the north (world frame)
+         * 3. apply rotation matrix to convert world frame to local frame
+         * 4. send the converted rotation to GL
+         */
+        val bearing = locationRepository.getBearingToNextPosition()
+    }
 }

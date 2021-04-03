@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.arfist.armona.getStringFormat
-import com.arfist.armona.services.Direction
 import com.arfist.armona.services.LocationRepository
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -22,9 +21,9 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     private var _permissionGranted = MutableLiveData<Boolean>()
     val permissionGranted: LiveData<Boolean> get() = _permissionGranted
 
-    private var _direction = MutableLiveData<Direction>()
-    val direction: LiveData<Direction> get() = _direction
-//    val direction = locationRepository.direction
+//    private var _direction = MutableLiveData<Direction>()
+//    val direction: LiveData<Direction> get() = _direction
+    val direction = locationRepository.direction
 
     private var _followLocation = MutableLiveData<Boolean>(false)
     val followLocation: LiveData<Boolean> get() = _followLocation
@@ -46,10 +45,14 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
         Timber.i("Get direction: ${lastLocation.value?.getStringFormat()}, ${destination}.")
         viewModelScope.launch {
             try {
-                _direction.value = lastLocation.value?.let {
+//                _direction.value = lastLocation.value?.let {
+//                    locationRepository.getDirection(
+//                        it.getStringFormat(), destination)
+//                }
+                lastLocation.value?.let {
                     locationRepository.getDirection(
                         it.getStringFormat(), destination)
-                }
+                }?.let { locationRepository.setDirection(it) }
                 Timber.i("get direction success")
             } catch (e: Exception) {
                 Timber.e(e)

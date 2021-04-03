@@ -3,6 +3,7 @@ package com.arfist.armona.services
 import android.content.Context
 import android.location.Location
 import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -49,8 +50,9 @@ class LocationRepository private constructor(context: Context){
     val currentLocation: LiveData<Location>
         get() = _currentLocation
 
-//    private var _direction = MutableLiveData<Direction>()
-//    val direction: LiveData<Direction> get() = _direction
+    private var _direction = MutableLiveData<Direction>()
+    val direction: LiveData<Direction>
+        get() = _direction
 
     // Location service provider with fine+coarse
     // This is what get call to get the location lat lng
@@ -104,6 +106,10 @@ class LocationRepository private constructor(context: Context){
     val surroundPlaceNames: LiveData<MutableList<String>>
         get() = _surroundPlaceNames
 
+    fun setDirection(value: Direction) {
+        _direction.value = value
+    }
+
     fun startLocationUpdates() {
         Timber.i("Start location update")
         try {
@@ -121,12 +127,18 @@ class LocationRepository private constructor(context: Context){
     }
 
     suspend fun getDirection(origin: String, destination: String): Direction {
-//    fun getDirection(origin: String, destination: String): Direction {
+      //    fun getDirection(origin: String, destination: String): Direction {
+        /**
+         * Get direction from origin to destination via walking only
+         */
         Timber.i("Get direction: ${origin}, ${destination}.")
         return retrofitService.getDirection(origin, destination)
     }
 
     fun getSurrounding() {
+        /**
+         * Get surrounding place in some range
+         */
         Timber.i("Get surroundings")
         try {
             val placeFields = listOf(Place.Field.NAME)
@@ -147,6 +159,85 @@ class LocationRepository private constructor(context: Context){
             Timber.e(e)
         }
     }
+
+    // The counting reset with get direction success
+    var route_count = 0
+    var leg_count = 0
+    var step_count = 0
+    var stopLocation: JSONLatLng? = null
+    fun getNextStop(): JSONLatLng? {
+        /**
+         * Get next step in legs in Routes in direction
+         */
+        var end_location: JSONLatLng? = null
+        if (_direction.value != null) {
+            end_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.end_location
+            }
+        return end_location
+        }
+
+    fun resetCounting() {
+        /**
+         * Reset every counting to start
+         */
+        route_count = 0
+        leg_count = 0
+        step_count = 0
+    }
+
+    fun incrementCounting() {
+        /**
+         * Increment the counting and check if it exceed or not then reset counting and may invoke end navigation
+         */
+
+        val route = _direction.value!!.routes
+        val leg = route?.get(route_count)?.legs
+        val step = leg?.get(leg_count)?.steps
+        step_count += 1
+        if (step != null) {
+            if (step_count >= step.size) {
+                leg_count += 1
+                step_count = 0
+                if (leg_count >= leg.size) {
+                    route_count += 1
+                    leg_count = 0
+                    if (route_count >= route.size){
+                        resetCounting()
+                        // May have to invoke end of navigation here
+                    }
+                }
+            }
+        }
+    }
+
+    val lowestMetres = 10
+    fun getBearingToNextPosition(): Float {
+        /**
+         * 1. Check if distance between current location and next stop is lower than an epsilon
+         * 2. if yes then increment and re-calculate the next stop
+         * 3. get bearing to use as angle from north clock wise (as the range not really far the initial bearing is enough
+         * 4. use the bearing to tell which direction to point
+         *
+         */
+        if (stopLocation == null) {
+            stopLocation = getNextStop()
+        }
+
+        val result = FloatArray(3)
+        stopLocation?.let {
+            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
+                it.lat!!, it.lng!!, result)
+        }
+
+        if (result[0] < lowestMetres) {
+            incrementCounting()
+            getNextStop()?.let {
+                Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
+                    it.lat!!, it.lng!!, result)
+            }
+        }
+        return result[1]
+    }
 //    suspend fun getDirection(destination: String) {
 ////    fun getDirection(destination: String) {
 //        Timber.i("Get direction: ${_currentLocation.value?.getStringFormat()}, ${destination}.")
@@ -162,12 +253,16 @@ class LocationRepository private constructor(context: Context){
 }
 
 interface MapApi {
+    /**
+     * This interface is HTTPS REST api to get direction data from google
+     */
+
     @GET(LocationRepository.DIRECTION_API)
     suspend fun getDirection(
 //    fun getDirection(
         @Query("origin") origin: String,
         @Query("destination") destination: String,
-        @Query("mode") mode: String = "walk",
+        @Query("mode") mode: String = "walking",
         @Query("key") key: String = BuildConfig.mapsApiKey
     ): Direction
 }

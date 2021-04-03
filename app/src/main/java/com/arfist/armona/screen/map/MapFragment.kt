@@ -103,10 +103,11 @@ class MapFragment : Fragment() {
         })
 
         mapViewModel.direction.observe(viewLifecycleOwner, {
-            if(::googleMap.isInitialized) {
-                direction = it
-                drawPolyline()
-            }
+//            if(::googleMap.isInitialized) {
+//                direction = it
+//                drawPolyline()
+//            }
+            direction = it
         })
 
         mapViewModel.followLocation.observe(viewLifecycleOwner, {
