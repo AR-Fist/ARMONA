@@ -59,4 +59,6 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
             }
         }
     }
+//    fun getDirection(destination: String) = locationRepository.getDirection(destination)
+
 }
