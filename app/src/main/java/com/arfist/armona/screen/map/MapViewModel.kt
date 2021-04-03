@@ -24,6 +24,7 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
 
     private var _direction = MutableLiveData<Direction>()
     val direction: LiveData<Direction> get() = _direction
+//    val direction = locationRepository.direction
 
     private var _followLocation = MutableLiveData<Boolean>(false)
     val followLocation: LiveData<Boolean> get() = _followLocation
@@ -55,4 +56,6 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
             }
         }
     }
+//    fun getDirection(destination: String) = locationRepository.getDirection(destination)
+
 }

@@ -5,7 +5,9 @@ import android.location.Location
 import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.arfist.armona.BuildConfig
+import com.arfist.armona.getStringFormat
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -15,6 +17,7 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
@@ -45,6 +48,9 @@ class LocationRepository private constructor(context: Context){
     private var _currentLocation = MutableLiveData<Location>()
     val currentLocation: LiveData<Location>
         get() = _currentLocation
+
+//    private var _direction = MutableLiveData<Direction>()
+//    val direction: LiveData<Direction> get() = _direction
 
     // Location service provider with fine+coarse
     // This is what get call to get the location lat lng
@@ -115,6 +121,7 @@ class LocationRepository private constructor(context: Context){
     }
 
     suspend fun getDirection(origin: String, destination: String): Direction {
+//    fun getDirection(origin: String, destination: String): Direction {
         Timber.i("Get direction: ${origin}, ${destination}.")
         return retrofitService.getDirection(origin, destination)
     }
@@ -140,11 +147,24 @@ class LocationRepository private constructor(context: Context){
             Timber.e(e)
         }
     }
+//    suspend fun getDirection(destination: String) {
+////    fun getDirection(destination: String) {
+//        Timber.i("Get direction: ${_currentLocation.value?.getStringFormat()}, ${destination}.")
+//        try {
+//            _direction.value = _currentLocation.value?.let {
+//                getDirection(it.getStringFormat(), destination)
+//            }
+//            Timber.i("get direction success")
+//        } catch (e: Exception) {
+//            Timber.e(e)
+//        }
+//    }
 }
 
 interface MapApi {
     @GET(LocationRepository.DIRECTION_API)
     suspend fun getDirection(
+//    fun getDirection(
         @Query("origin") origin: String,
         @Query("destination") destination: String,
         @Query("mode") mode: String = "walk",

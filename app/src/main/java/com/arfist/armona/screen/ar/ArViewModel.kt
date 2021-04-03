@@ -41,6 +41,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 //    val uncalibGyroscope = sensorsRepository.uncalibratedGyroscope
 //    val uncalibMagnetometer = sensorsRepository.uncalibratedMagnetometer
 
+    val location = locationRepository.currentLocation
     // Filters
     private val complementaryFilter = ComplementaryFilter(0.98F)
     private val complementaryFilterGravity = ComplementaryFilter(0.98F)
@@ -66,6 +67,10 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         Log.i("Time", "$dt $timestamp $lastTimestamp")
         lastTimestamp = timestamp
         val androidRotationMatrix = FloatArray(9)
+        Log.i(
+            "CurrentLocation",
+            "${location.value}, $timestamp"
+        )
         try {
             // Android's
             SensorManager.getRotationMatrix(
