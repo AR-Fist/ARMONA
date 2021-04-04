@@ -240,18 +240,26 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             ((rotationMatrix[1, 0] - rotationMatrix[0, 1]) / (4*w)).toFloat()
         )
     }
-      fun calculateArrowRotation() {
+    fun calculateArrowRotation(): FloatArray{
         /**
          * This method will be call every sensor update loop ie gyroscope, magnetometer,
          * accelerometer and GPS only in arviewmodel not in map viewmodel as mapviewmodel
          * not need this data
          *
          * For the arrow rotation
-         * 1. init arrow as 0 0 0 point to north tangent to surface (world frame)
-         * 2. rotate by initial bearing from the north (world frame)
-         * 3. apply rotation matrix to convert world frame to local frame
-         * 4. send the converted rotation to GL
+         * 1. the vector is heading north in the world frame(y axis)
+         * 2. the vector will rotate around z axis as bearing degree
+         * 3. apply the rotation of phone in order to change from world fram to local frame
+         *
+         * The (2) will calculated by location lat lng
+         * The (3) will calculated by sensors with some filter
          */
         val bearing = locationRepository.getBearingToNextPosition()
+        // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
+        val arrow_rotation_world = Quaternion(cos((360-bearing)/2), 0f, 0f, sin((360-bearing)/2))
+        // This is the rotation of the arrow in the local as quaternion
+        val arrow_rotation_local = arrow_rotation_world*complementaryFilter.rotationQuaternion
+        // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
+        return arrow_rotation_local.toEuler()
     }
 }

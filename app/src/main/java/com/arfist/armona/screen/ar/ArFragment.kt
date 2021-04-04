@@ -76,10 +76,6 @@ class ArFragment : Fragment() {
         })
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
             showOutputAndLog("RotationVector", R.id.rotvec, it.values, it)
-            Log.i(
-                "RotationVector2",
-                "${it.values[0]}, ${it.values[1]}, ${it.values[2]}, ${it.values[3]}, ${it.timestamp}"
-            )
 
             val rotvecang = quaternionToEuler(Quaternion(it.values[0], it.values[1], it.values[2], it.values[3]))
             Log.i(
