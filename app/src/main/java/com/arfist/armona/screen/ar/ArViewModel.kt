@@ -56,6 +56,10 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val complementaryAngle: LiveData<FloatArray>
         get() = _complementaryAngle
 
+    private val _arrowRotation = MutableLiveData<FloatArray>()
+    val arrowRotation: LiveData<FloatArray>
+        get() = _arrowRotation
+
     fun registerSensors() = sensorsRepository.registerSensors()
 
     fun unregisterSensors() = sensorsRepository.unregisterSensors()
@@ -240,7 +244,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             ((rotationMatrix[1, 0] - rotationMatrix[0, 1]) / (4*w)).toFloat()
         )
     }
-    fun calculateArrowRotation(): FloatArray{
+    fun calculateArrowRotation() {
         /**
          * This method will be call every sensor update loop ie gyroscope, magnetometer,
          * accelerometer and GPS only in arviewmodel not in map viewmodel as mapviewmodel
@@ -260,6 +264,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         // This is the rotation of the arrow in the local as quaternion
         val arrow_rotation_local = arrow_rotation_world*complementaryFilter.rotationQuaternion
         // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
-        return arrow_rotation_local.toEuler()
+        _arrowRotation.value = arrow_rotation_local.toEuler()
     }
 }
