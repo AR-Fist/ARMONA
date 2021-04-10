@@ -102,9 +102,9 @@ class Quaternion(
     fun toEuler(): FloatArray {
         val rotationMatrix = getRotationMatrix()
         val test = -rotationMatrix[6]
-        var yaw: Float = 0f
-        var pitch: Float = 0f
-        var roll: Float = 0f
+        var yaw = 0f
+        var pitch = 0f
+        var roll = 0f
         if (test > 1-EPSILON) {
             yaw = 0f
             pitch = PI.toFloat()/2
@@ -122,11 +122,11 @@ class Quaternion(
     }
 
     fun oldToEuler(): FloatArray {
-        // Euler angles as roll, pitch, yaw
+        // Euler angles as yaw, pitch, roll
         val euler = FloatArray(3)
         val srcp = 2*(this.w*this.y+this.x*this.z)
         val crcp = 1 - 2*(this.x*this.x+this.y*this.y)
-        euler[0] = atan2(srcp, crcp)
+        euler[2] = atan2(srcp, crcp)
 
         var sp = 2*(this.w*this.y-this.z*this.x)
         sp = if(abs(sp) > 1 ) { 1F } else { -1F }
@@ -134,7 +134,7 @@ class Quaternion(
 
         val sycp = 2*(this.w*this.z+this.x*this.y)
         val cycp = 1 - 2*(this.y*this.y+this.z*this.z)
-        euler[2] = atan2(sycp, cycp)
+        euler[0] = atan2(sycp, cycp)
         return euler
     }
 }

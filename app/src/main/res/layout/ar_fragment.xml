@@ -13,331 +13,353 @@
         android:layout_height="match_parent"
         tools:context=".screen.ar.ArFragment">
 
-        <TableLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <TableRow
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graph1"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/acc_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="accel" />
-            </TableRow>
-            <TableRow
+                android:layout_height="232dp" />
+
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graph2"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/acc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
+                android:layout_height="240dp" />
+
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graph3"
+                android:layout_width="match_parent"
+                android:layout_height="256dp" />
+
+        </LinearLayout>
+
+        <!--        <TableLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent" >-->
+
 <!--            <TableRow-->
 <!--                android:layout_width="match_parent"-->
 <!--                android:layout_height="match_parent" >-->
 <!--                <TextView-->
-<!--                    android:id="@+id/acc_un_text"-->
+<!--                    android:id="@+id/acc_text"-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:gravity="center"-->
 <!--                    android:textSize="18sp"-->
-<!--                    android:text="accel uncal" />-->
+<!--                    android:text="accel" />-->
 <!--            </TableRow>-->
 <!--            <TableRow-->
 <!--                android:layout_width="match_parent"-->
 <!--                android:layout_height="match_parent" >-->
 <!--                <TextView-->
-<!--                    android:id="@+id/acc_un"-->
+<!--                    android:id="@+id/acc"-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:gravity="center"-->
 <!--                    android:textSize="18sp"-->
 <!--                    android:text="@string/testPlaceholder"/>-->
 <!--            </TableRow>-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/acc_un_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="accel uncal" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/acc_un"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder"/>&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/linacc_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="linear accel" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;            <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/linacc"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder"/>&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+
 <!--            <TableRow-->
 <!--                android:layout_width="match_parent"-->
 <!--                android:layout_height="match_parent" >-->
 <!--                <TextView-->
-<!--                    android:id="@+id/linacc_text"-->
+<!--                    android:id="@+id/gyro_text"-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:gravity="center"-->
 <!--                    android:textSize="18sp"-->
-<!--                    android:text="linear accel" />-->
+<!--                    android:text="gyro" />-->
 <!--            </TableRow>-->
 <!--            <TableRow-->
 <!--                android:layout_width="match_parent"-->
 <!--                android:layout_height="match_parent" >-->
-<!--            <TextView-->
-<!--                    android:id="@+id/linacc"-->
+<!--                <TextView-->
+<!--                    android:id="@+id/gyro"-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder" />-->
+<!--            </TableRow>-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/gyro_un_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="gyro uncal" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/gyro_un"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/gra_text"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="gravity"/>-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/gra"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder" />-->
+<!--            </TableRow>-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/step_counter_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="step counter" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/step_counter"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/rotvec_text"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="rotation vector" />-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/rotvec"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder" />-->
+<!--            </TableRow>-->
+
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/georotvec_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="geo rot vec" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/georotvec"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/magf_text"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="magf" />-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent" >-->
+<!--                <TextView-->
+<!--                    android:id="@+id/magf"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:gravity="center"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder" />-->
+<!--            </TableRow>-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/magfun_text"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="magf un" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--&lt;!&ndash;            <TableRow&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;                android:layout_height="match_parent" >&ndash;&gt;-->
+<!--&lt;!&ndash;                <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:id="@+id/magfun"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:textSize="18sp"&ndash;&gt;-->
+<!--&lt;!&ndash;                    android:text="@string/testPlaceholder" />&ndash;&gt;-->
+<!--&lt;!&ndash;            </TableRow>&ndash;&gt;-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/rotvec_ang"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:gravity="start"-->
 <!--                    android:textSize="18sp"-->
 <!--                    android:text="@string/testPlaceholder"/>-->
 <!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/ggorient_ang"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:gravity="start"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder"/>-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/myorient_ang"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:gravity="start"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder"/>-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/cf_ang"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:gravity="start"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder"/>-->
+<!--            </TableRow>-->
+<!--            <TableRow-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/kalman_ang"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:gravity="start"-->
+<!--                    android:textSize="18sp"-->
+<!--                    android:text="@string/testPlaceholder"/>-->
+<!--            </TableRow>-->
+<!--        </TableLayout>-->
 
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/gyro_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="gyro" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/gyro"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder" />
-            </TableRow>
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/gyro_un_text"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="gyro uncal" />-->
-<!--            </TableRow>-->
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/gyro_un"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="@string/testPlaceholder" />-->
-<!--            </TableRow>-->
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/gra_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="gravity"/>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/gra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder" />
-            </TableRow>
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/step_counter_text"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="step counter" />-->
-<!--            </TableRow>-->
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/step_counter"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="@string/testPlaceholder" />-->
-<!--            </TableRow>-->
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/rotvec_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="rotation vector" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/rotvec"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder" />
-            </TableRow>
+<!--&lt;!&ndash;        <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_height="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:text="AR HERE"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:textSize="36sp" />&ndash;&gt;-->
 
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/georotvec_text"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="geo rot vec" />-->
-<!--            </TableRow>-->
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/georotvec"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="@string/testPlaceholder" />-->
-<!--            </TableRow>-->
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/magf_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="magf" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-                <TextView
-                    android:id="@+id/magf"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder" />
-            </TableRow>
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/magfun_text"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="magf un" />-->
-<!--            </TableRow>-->
-<!--            <TableRow-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="match_parent" >-->
-<!--                <TextView-->
-<!--                    android:id="@+id/magfun"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:gravity="center"-->
-<!--                    android:textSize="18sp"-->
-<!--                    android:text="@string/testPlaceholder" />-->
-<!--            </TableRow>-->
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/rotvec_ang"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="start"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/ggorient_ang"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="start"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/myorient_ang"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="start"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/cf_ang"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="start"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/kalman_ang"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="start"
-                    android:textSize="18sp"
-                    android:text="@string/testPlaceholder"/>
-            </TableRow>
-        </TableLayout>
-
-<!--        <TextView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            android:layout_gravity="center"-->
-<!--            android:gravity="center"-->
-<!--            android:text="AR HERE"-->
-<!--            android:textSize="36sp" />-->
-
-<!--        <ScrollView-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            android:scrollbars="vertical">-->
-<!--        <TextView-->
-<!--            android:id="@+id/textOut"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:textSize="16sp"-->
-<!--            tools:text="@string/testPlaceholder@string/testPlaceholder"-->
-<!--            />-->
-<!--        </ScrollView>-->
+<!--&lt;!&ndash;        <ScrollView&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_height="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:scrollbars="vertical">&ndash;&gt;-->
+<!--&lt;!&ndash;        <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;            android:id="@+id/textOut"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:textSize="16sp"&ndash;&gt;-->
+<!--&lt;!&ndash;            tools:text="@string/testPlaceholder@string/testPlaceholder"&ndash;&gt;-->
+<!--&lt;!&ndash;            />&ndash;&gt;-->
+<!--&lt;!&ndash;        </ScrollView>&ndash;&gt;-->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/button_ar_map"
             android:layout_width="wrap_content"
@@ -350,4 +372,5 @@
             android:src="@drawable/ic_launcher_foreground" />
 
     </FrameLayout>
+
 </layout>

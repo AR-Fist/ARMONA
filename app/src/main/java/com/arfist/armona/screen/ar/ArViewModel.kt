@@ -133,6 +133,11 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
                 "${extendedKalmanEuler[0]}, ${extendedKalmanEuler[1]}, ${extendedKalmanEuler[2]}, $timestamp"
             )
 
+            calculateArrowRotation()
+            Log.i(
+                "ArrowRotationAngle",
+                "${_arrowRotation.value?.get(0)}, ${_arrowRotation.value?.get(1)}, ${_arrowRotation.value?.get(2)}, $timestamp"
+            )
         } catch (e: Exception) {
             Timber.e(e)
         }
@@ -264,6 +269,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         // This is the rotation of the arrow in the local as quaternion
         val arrow_rotation_local = arrow_rotation_world*complementaryFilter.rotationQuaternion
         // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
-        _arrowRotation.value = arrow_rotation_local.toEuler()
+        _arrowRotation.value = arrow_rotation_local.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }
