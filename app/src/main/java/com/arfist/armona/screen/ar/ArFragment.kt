@@ -34,11 +34,12 @@ class ArFragment : Fragment() {
 
     private lateinit var sensorManager: SensorManager
 
-    private lateinit var graph1: GraphView
-    private lateinit var graph2: GraphView
-    private lateinit var graph3: GraphView
-
+    private val graphs = ArrayList<GraphView>()
     private val series = ArrayList<LineGraphSeries<DataPoint>>()
+
+    private val graphSize = 5
+    private val dataSize = 3
+    private val seriesSize = graphSize*dataSize
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,69 +62,77 @@ class ArFragment : Fragment() {
         binding.arViewModel = viewModel
         observeSensors()
 
-        graph1 = view.findViewById(R.id.graph1)
-        graph2 = view.findViewById(R.id.graph2)
-        graph3 = view.findViewById(R.id.graph3)
-        for (i in 0..8) {
-            series.add(LineGraphSeries<DataPoint>())
-        }
+        initGraphSeries()
         configGraph()
+        configSeries()
 
         binding.buttonArMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
     }
 
+    @SuppressLint("LogNotTimber")
     private fun observeSensors() {
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
             getOrientation(it.timestamp)
             val quat = Quaternion(it.values[0], it.values[1], it.values[2], it.values[3])
-           val rotvecang = quat.toEuler()
-            series[0].appendData(DataPoint(it.timestamp.toDouble(), rotvecang[0].toDouble()), true, 100)
-            series[1].appendData(DataPoint(it.timestamp.toDouble(), rotvecang[1].toDouble()), true, 100)
-            series[2].appendData(DataPoint(it.timestamp.toDouble(), rotvecang[2].toDouble()), true, 100)
+            val rotvecang = quat.toEuler()
+            series.appendData(it.timestamp.toDouble(), rotvecang, 0)
+        })
 
-            val rotvecangOld = quat.oldToEuler()
-            series[6].appendData(DataPoint(it.timestamp.toDouble(), rotvecangOld[0].toDouble()), true, 100)
-            series[7].appendData(DataPoint(it.timestamp.toDouble(), rotvecangOld[1].toDouble()), true, 100)
-            series[8].appendData(DataPoint(it.timestamp.toDouble(), rotvecangOld[2].toDouble()), true, 100)
+        binding.arViewModel!!.mGoogleOrientation.observe(viewLifecycleOwner, {
+            series.appendData(it[3].toDouble(), it, 1)
         })
 
         binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
-            series[3].appendData(DataPoint(it[3].toDouble(), it[0].toDouble()), true, 100)
-            series[4].appendData(DataPoint(it[3].toDouble(), it[1].toDouble()), true, 100)
-            series[5].appendData(DataPoint(it[3].toDouble(), it[2].toDouble()), true, 100)
+            series.appendData(it[3].toDouble(), it, 2)
         })
 
-//        binding.arViewModel!!.arrowRotation.observe(viewLifecycleOwner, {
-//            series[6].appendData(DataPoint(it[3].toDouble(), it[0].toDouble()), true, 100)
-//            series[7].appendData(DataPoint(it[3].toDouble(), it[1].toDouble()), true, 100)
-//            series[8].appendData(DataPoint(it[3].toDouble(), it[2].toDouble()), true, 100)
-//        })
+        binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
+            series.appendData(it[3].toDouble(), it, 3)
+        })
+
+        binding.arViewModel!!.arrowRotation.observe(viewLifecycleOwner, {
+            series.appendData(it[3].toDouble(), it, 4)
+        })
     }
 
     private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
-    private fun quaternionToEuler(quaternion: Quaternion) = binding.arViewModel?.quaternionToEuler(quaternion)
 
+    private fun ArrayList<LineGraphSeries<DataPoint>>.appendData(timestamp: Double, values: FloatArray, count: Int) {
+        val startIndex = count*3
+        for (i in 0 until dataSize) {
+            this[startIndex+i].appendData(DataPoint(timestamp, values[i].toDouble()), true, 100)
+        }
+    }
+
+    private fun initGraphSeries() {
+        graphs.add(requireView().findViewById(R.id.graphRotVec))
+        graphs.add(requireView().findViewById(R.id.graphGGOrient))
+        graphs.add(requireView().findViewById(R.id.graphComplementary))
+        graphs.add(requireView().findViewById(R.id.graphKalman))
+        graphs.add(requireView().findViewById(R.id.graphArrow))
+
+        for (i in 0 until seriesSize) {
+            series.add(LineGraphSeries<DataPoint>())
+        }
+    }
     private fun configGraph() {
-        configViewPort(graph1.viewport)
-        configViewPort(graph2.viewport)
-        configViewPort(graph3.viewport)
-        add3Series(graph1, 0)
-        add3Series(graph2, 1)
-        add3Series(graph3, 2)
-        configSeries()
-        configNormalGraph(graph1)
+        for (i in 0 until graphSize) {
+            configViewPort(graphs[i].viewport)
+            add3Series(graphs[i], i)
+            configNormalGraph(graphs[i])
+        }
     }
 
     private fun add3Series(graph: GraphView, num: Int) {
-        for (i in 0..2) {
+        for (i in 0 until dataSize) {
             graph.addSeries(series[i+(num*3)])
         }
     }
 
     private fun configSeries() {
-        for (i in 0..2) {
+        for (i in 0 until graphSize) {
             series[0+(3*i)].title = "Yaw"
             series[0+(3*i)].color = Color.RED
             series[1+(3*i)].title = "Pitch"

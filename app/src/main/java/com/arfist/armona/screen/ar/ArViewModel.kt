@@ -47,7 +47,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     private val complementaryFilterGravity = ComplementaryFilter(0.98F)
 //    private val kalmanFilter1D = KalmanFilter1D()
     private val extendedKalmanFilter = ExtendedKalmanFilter()
-
     private var lastTimestamp: Long = 0
     private var dt: Float = 0.0F
     private val nanosec2sec: Float = 1/1000000000F
@@ -55,6 +54,14 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     private val _complementaryAngle = MutableLiveData<FloatArray>()
     val complementaryAngle: LiveData<FloatArray>
         get() = _complementaryAngle
+
+    private val _extendedKalman = MutableLiveData<FloatArray>()
+    val extendedKalman: LiveData<FloatArray>
+        get() = _extendedKalman
+
+    private val _mGoogleOrientation = MutableLiveData<FloatArray>()
+    val mGoogleOrientation: LiveData<FloatArray>
+        get() = _mGoogleOrientation
 
     private val _arrowRotation = MutableLiveData<FloatArray>()
     val arrowRotation: LiveData<FloatArray>
@@ -86,10 +93,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
             val orientationAngles = FloatArray(3)
             SensorManager.getOrientation(androidRotationMatrix, orientationAngles)
-            Log.i(
-                "GoogleOrientationAngles",
-                "${orientationAngles[0]}, ${orientationAngles[1]}, ${orientationAngles[2]}, $timestamp"
-            )
+            _mGoogleOrientation.value = orientationAngles + floatArrayOf(timestamp.toFloat())
         } catch (e: Exception) {
             Timber.e(e)
         }
@@ -111,70 +115,15 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
                 extendedKalmanFilter.predict(gyroscopeDouble, dt)
                 extendedKalmanFilter.update((accelerometer.value!!.values).toDouble(), (magnetometer.value!!.values).toDouble())
             }
-            val complementaryEuler = complementaryFilter.rotationQuaternion.toEuler()
-            val oldComplementaryEuler = complementaryFilter.rotationQuaternion.oldToEuler()
-            val gravityComplementaryEuler = complementaryFilterGravity.rotationQuaternion.toEuler()
             val xHat = extendedKalmanFilter.xHat[0..3, 0]
-            val extendedKalmanEuler = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler()
-            Log.i(
-                "myComplementary",
-                "${complementaryEuler[0]}, ${complementaryEuler[1]}, ${complementaryEuler[2]}, $timestamp"
-            )
-            Log.i(
-                "myOldComplementary",
-                "${oldComplementaryEuler[0]}, ${oldComplementaryEuler[1]}, ${oldComplementaryEuler[2]}, $timestamp"
-            )
-            Log.i(
-                "myGravityComplementary",
-                "${gravityComplementaryEuler[0]}, ${gravityComplementaryEuler[1]}, ${gravityComplementaryEuler[2]}, $timestamp"
-            )
-            Log.i(
-                "myExtendedKalman",
-                "${extendedKalmanEuler[0]}, ${extendedKalmanEuler[1]}, ${extendedKalmanEuler[2]}, $timestamp"
-            )
+            _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler() + floatArrayOf(timestamp.toFloat())
 
+            _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
             calculateArrowRotation()
-            Log.i(
-                "ArrowRotationAngle",
-                "${_arrowRotation.value?.get(0)}, ${_arrowRotation.value?.get(1)}, ${_arrowRotation.value?.get(2)}, $timestamp"
-            )
+
         } catch (e: Exception) {
             Timber.e(e)
         }
-    }
-//    private var lastRotationQuaternion = Quaternion(0F, 0F, 0F, 0F)
-//    private fun complementaryFilter(rotationVectorAccelerationMagnetic: Quaternion?): Quaternion? {
-////        val alpha =  timeConstant / (timeConstant+dt)
-//        val alpha = 0.98F
-//        Log.i("alpha", "${alpha}, ${dt}, ${timeConstant}, ${nanosec2sec}")
-//        if (rotationVectorAccelerationMagnetic == null) return null
-//        val rotationVectorGyroscope = gyroscopeRotationQuaternion(lastRotationQuaternion) ?: return null
-//        Log.i("GyroscopeOnly", "${rotationVectorGyroscope.x}, ${rotationVectorGyroscope.y}, ${rotationVectorGyroscope.z}, ${rotationVectorGyroscope.w}, $lastTimestamp")
-//
-//        val rotationVecGyroAngle = quaternionToEuler(rotationVectorGyroscope)
-//        Log.i("GyroscopeAngle", "${rotationVecGyroAngle[0]}, ${rotationVecGyroAngle[1]}, ${rotationVecGyroAngle[2]}, $lastTimestamp")
-//        val scaledVectorGyroscope = rotationVectorGyroscope * alpha.toFloat()
-//        val scaledVectorAccMag = rotationVectorAccelerationMagnetic * ((1-alpha).toFloat())
-//        val result = scaledVectorAccMag + (scaledVectorGyroscope)
-//        lastRotationQuaternion = Quaternion(result.x, result.y, result.z, result.w)
-//        return result
-//    }
-
-    fun quaternionToEuler(quaternion: Quaternion): FloatArray {
-        // Euler angles as roll, pitch, yaw
-        val euler = FloatArray(3)
-        val srcp = 2*(quaternion.w*quaternion.y+quaternion.x*quaternion.z)
-        val crcp = 1 - 2*(quaternion.x*quaternion.x+quaternion.y*quaternion.y)
-        euler[0] = atan2(srcp, crcp)
-
-        var sp = 2*(quaternion.w*quaternion.y-quaternion.z*quaternion.x)
-        sp = if(abs(sp) > 1 ) { 1F } else { -1F }
-        euler[1] = asin(sp)
-
-        val sycp = 2*(quaternion.w*quaternion.z+quaternion.x*quaternion.y)
-        val cycp = 1 - 2*(quaternion.y*quaternion.y+quaternion.z*quaternion.z)
-        euler[2] = atan2(sycp, cycp)
-        return euler
     }
 
 //    fun gyroscopeRotationQuaternion(lastRotationVector: Quaternion): Quaternion? {
@@ -218,15 +167,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         rotationMatrix[0, 0..2] = create(doubleArrayOf(east[0].toDouble(), east[1].toDouble(), east[2].toDouble()))
         rotationMatrix[1, 0..2] = create(doubleArrayOf(north[0].toDouble(), north[1].toDouble(), north[2].toDouble()))
         rotationMatrix[2, 0..2] = create(doubleArrayOf(up[0].toDouble(), up[1].toDouble(), up[2].toDouble()))
-//        rotationMatrix[0] = east[0]
-//        rotationMatrix[1] = east[1]
-//        rotationMatrix[2] = east[2]
-//        rotationMatrix[3] = north[0]
-//        rotationMatrix[4] = north[1]
-//        rotationMatrix[5] = north[2]
-//        rotationMatrix[6] = up[0]
-//        rotationMatrix[7] = up[1]
-//        rotationMatrix[8] = up[2]
         return rotationMatrix
     }
 
@@ -265,10 +205,10 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
          */
         val bearing = locationRepository.getBearingToNextPosition()
         // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
-        val arrow_rotation_world = Quaternion(cos((360-bearing)/2), 0f, 0f, sin((360-bearing)/2))
+        val arrowRotationWorld = Quaternion(cos((360-bearing)/2), 0f, 0f, sin((360-bearing)/2))
         // This is the rotation of the arrow in the local as quaternion
-        val arrow_rotation_local = arrow_rotation_world*complementaryFilter.rotationQuaternion
+        val arrowRotationLocal = arrowRotationWorld*complementaryFilter.rotationQuaternion
         // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
-        _arrowRotation.value = arrow_rotation_local.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        _arrowRotation.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }
