@@ -17,7 +17,7 @@ import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
 import com.arfist.armona.MainActivity.Companion.permissionList
 import com.arfist.armona.R
 import com.arfist.armona.databinding.MapFragmentBinding
-import com.arfist.armona.hasPermission
+import com.arfist.armona.utils.hasPermission
 import com.arfist.armona.services.Direction
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap

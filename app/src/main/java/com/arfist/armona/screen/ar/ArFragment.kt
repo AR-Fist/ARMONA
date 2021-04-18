@@ -1,11 +1,8 @@
 package com.arfist.armona.screen.ar
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.*
-import android.graphics.Rect
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.util.Log
@@ -13,8 +10,6 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
@@ -26,30 +21,25 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import com.google.common.util.concurrent.ListenableFuture
 import org.opencv.android.Utils
 import org.opencv.imgproc.Imgproc
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.PI
-import android.media.Image
+import android.os.Build
+import androidx.annotation.RequiresApi
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
 import org.opencv.core.Point
-import java.io.ByteArrayOutputStream
-import kotlin.math.atan2
-
+import com.arfist.armona.utils.toBitmap
+import android.util.Size
+import android.widget.ImageView
 
 class ArFragment : Fragment() {
     private lateinit var viewModel: ArViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
-    private lateinit var cameraExecutor: ExecutorService
+    private var executors = Array(2){ Executors.newSingleThreadExecutor() }
 
 
     companion object {
@@ -62,6 +52,8 @@ class ArFragment : Fragment() {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
+    @androidx.camera.core.ExperimentalGetImage()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -69,7 +61,7 @@ class ArFragment : Fragment() {
         Timber.i("onCreateView")
 
         if (this.allRequiredPermissionsGranted()){
-            setupCam(container)
+            setupCam(container!!)
         }else{
             ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
@@ -82,68 +74,80 @@ class ArFragment : Fragment() {
             Log.e("OpenCV", "Load fail")
         }
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
+
 
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
         return binding.root
     }
 
-    private fun setupCam(container: ViewGroup?) {
-        val cameraProvider = ProcessCameraProvider.getInstance(requireContext())
-
-        cameraProvider.addListener({
-            val cameraProvider  = cameraProvider.get()
-            val imageAnalysis = ImageAnalysis.Builder().build()
-            imageAnalysis.setAnalyzer(
-                cameraExecutor,
-                {imageproxy -> roadDetector(imageproxy, container!!)},
-            )
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            try {
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis)
-
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun setupCam(container: ViewGroup) {
+        val cameraProvider = ProcessCameraProvider.getInstance(requireContext()).get()
+        val roadDetectionUseCase = ImageAnalysis.Builder()
+            .setTargetResolution(Size(240, 320))
+            .build()
+            .also {
+                it.setAnalyzer(
+                    executors[0],
+                    {imageProxy -> detectRoad(imageProxy, container)},
+                )
             }
-        },
-            ContextCompat.getMainExecutor(context))
+
+        val liveCamViewUseCase = ImageAnalysis.Builder()
+            .setTargetResolution(Size(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
+            .build()
+            .also {
+                it.setAnalyzer(
+                    executors[1],
+                    {imageProxy -> liveCamView(imageProxy, container)},
+                )
+            }
+
+        // Select back camera as a default
+        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+        try {
+            // Unbind use cases before rebinding
+            cameraProvider.unbindAll()
+
+            // Bind use cases to camera
+            cameraProvider.bindToLifecycle(this, cameraSelector, roadDetectionUseCase, liveCamViewUseCase)
+
+        } catch (exc: Exception) {
+            Log.e(TAG, "Use case binding failed", exc)
+        }
     }
 
-    @SuppressLint("UnsafeExperimentalUsageError")
-    private fun roadDetector(imageproxy: ImageProxy, container: ViewGroup){
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun liveCamView(imageproxy: ImageProxy, container: ViewGroup){
+        var glview = container.findViewById<GLView>(R.id.gl_view)
+        glview.streamCameraView(imageproxy.image!!.toBitmap())
+        imageproxy.close()
+    }
 
-        val rotationDegrees = imageproxy.imageInfo.rotationDegrees
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun detectRoad(imageproxy: ImageProxy, container: ViewGroup){
 
         // get image from image proxy
-        val img = imageproxy.image?.toBitmap()
+        val img = imageproxy.image!!.toBitmap()
         val rgba = Mat()
         Utils.bitmapToMat(img, rgba)
 
-        if (img != null) {
-            Log.d("Image", img.height.toString() + ", " + img.width.toString())
-        }
-
-        var result_lines = img?.let { detectRoadFromBitmap(rgba) }
+        var resultLines = detectRoadFromBitmap(rgba)
 
         // plot left
-        var left = result_lines?.get(0)
+        var left = resultLines[0]
         Log.d("Left line (x1,y1,x2,y2)",left.toString())
-        var pt1 = left?.get(0)?.let { Point(it.toDouble(), left[1].toDouble()) }
-        var pt2 = left?.get(2)?.let { Point(it.toDouble(), left[3].toDouble()) }
+        var pt1 = Point(left[0].toDouble(), left[1].toDouble())
+        var pt2 = Point(left[2].toDouble(), left[3].toDouble())
         //Drawing lines on an image
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
         // plot right
-        var right = result_lines?.get(1)
+        var right = resultLines[1]
         Log.d("Right line (x1,y1,x2,y2)",right.toString())
-        pt1 = right?.get(0)?.let { Point(it.toDouble(), right[1].toDouble()) }
-        pt2 = right?.get(2)?.let { Point(it.toDouble(), right[3].toDouble()) }
+        pt1 = Point(right[0].toDouble(), right[1].toDouble())
+        pt2 = Point(right[2].toDouble(), right[3].toDouble())
         //Drawing lines on an image
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
@@ -151,34 +155,12 @@ class ArFragment : Fragment() {
 //        val resultBitmap = img?.copy(Bitmap.Config.RGB_565, true)
         Utils.matToBitmap(rgba, img)
 
-
-        // UI thread for update ImageView
         requireActivity().runOnUiThread {
             var imgview = container.findViewById<ImageView>(R.id.image_view)
             imgview.setImageBitmap(img)
         }
+
         imageproxy.close()
-
-    }
-
-    // util method for converting Image to Bitmap
-    private fun Image.toBitmap(): Bitmap {
-        val yBuffer = planes[0].buffer // Y
-        val vuBuffer = planes[2].buffer // VU
-
-        val ySize = yBuffer.remaining()
-        val vuSize = vuBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + vuSize)
-
-        yBuffer.get(nv21, 0, ySize)
-        vuBuffer.get(nv21, ySize, vuSize)
-
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, this.width, this.height, null)
-        val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 50, out)
-        val imageBytes = out.toByteArray()
-        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
