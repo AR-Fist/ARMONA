@@ -26,7 +26,6 @@ class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView
         holder.setFormat(PixelFormat.TRANSLUCENT)
 
         glRenderer = GLRenderer(resources.displayMetrics.widthPixels.toFloat() / resources.displayMetrics.heightPixels)
-        Timber.i("DISP: width: ${resources.displayMetrics.widthPixels}, height: ${resources.displayMetrics.heightPixels}")
         setRenderer(glRenderer)
         renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }

@@ -3,14 +3,17 @@ package com.arfist.armona.screen.ar
 import android.graphics.Bitmap
 import android.opengl.GLES20
 import android.opengl.GLUtils
+import android.util.Size
 import timber.log.Timber
 import java.lang.Exception
 import java.nio.*
-import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy
 
-class LiveCameraView(screenRatio: Float) {
-    public var textureBitmap: Bitmap = Bitmap.createBitmap(intArrayOf(0,0,0), 1,1, Bitmap.Config.ARGB_8888)
+class LiveCameraView(val screenRatio: Float) {
+
+    var cameraViewBitmap: Bitmap = Bitmap.createBitmap(intArrayOf(0,0,0), 1,1, Bitmap.Config.ARGB_8888)
     set(value) {
+        if (field.width != value.width || field.height != value.height)
+            fitTextureCoord(Size(value.width, value.height))
         field = value;
         reloadTexture();
     }
@@ -51,14 +54,7 @@ class LiveCameraView(screenRatio: Float) {
         -1f, 1f,
     )
 
-    private val compoundFactor: Float = (1491 * 880).toFloat() / (1920 * 720).toFloat()
 
-    private val textureCoords = floatArrayOf(
-        0f, 0f,
-        (1f + compoundFactor) / 2f, 1f,
-        (1f + compoundFactor) / 2f, 0f,
-        0f, 1f,
-    )
 
     private val indices = shortArrayOf(
         0,1,2,
@@ -86,25 +82,20 @@ class LiveCameraView(screenRatio: Float) {
 
     private val textureBuffer: FloatBuffer =
         // (number of coordinate values * 4 bytes per float)
-        ByteBuffer.allocateDirect(textureCoords.size * 4).run {
+        ByteBuffer.allocateDirect(32).run {
             // use the device hardware's native byte order
             order(ByteOrder.nativeOrder())
 
             // create a floating point buffer from the ByteBuffer
-            asFloatBuffer().apply {
-                // add the coordinates to the FloatBuffer
-                put(textureCoords)
-                // set the buffer to read the first coordinate
-                position(0)
-            }
+            asFloatBuffer()
         }
 
     private  val indicesBuffer: ShortBuffer =
         ByteBuffer.allocateDirect(indices.size * 2).run{
-        this.order(ByteOrder.nativeOrder())
+        order(ByteOrder.nativeOrder())
 
         // create a floating point buffer from the ByteBuffer
-        this.asShortBuffer().apply {
+        asShortBuffer().apply {
             // add the coordinates to the FloatBuffer
             put(indices)
             // set the buffer to read the first coordinate
@@ -128,7 +119,7 @@ class LiveCameraView(screenRatio: Float) {
 
     private var mProgram: Int
 
-    fun loadShader(type: Int, shaderCode: String): Int {
+    private fun loadShader(type: Int, shaderCode: String): Int {
 
         val shader = GLES20.glCreateShader(type).also { shader ->
 
@@ -194,6 +185,56 @@ class LiveCameraView(screenRatio: Float) {
             )
         }
 
+        loadTexture()
+
+        GLES20.glGetUniformLocation(mProgram, "u_Texture").run {
+            GLES20.glUniform1i(this, 0)
+        }
+    }
+
+    private fun loadTexture(){
+        GLES20.glGenTextures(1, texture);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0])
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, cameraViewBitmap, 0)
+        GLES20.glFlush()
+    }
+
+    private fun reloadTexture(){
+        GLES20.glUseProgram(mProgram)
+        GLES20.glDeleteTextures(1, texture)
+        GLES20.glGenTextures(1, texture);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0])
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        try {
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, cameraViewBitmap, 0)
+        }catch (e: Exception){
+            Timber.e(e);
+        }
+        GLES20.glFlush()
+        Timber.d("Bitmap is updated, ${cameraViewBitmap.width}:${cameraViewBitmap.height}, ${cameraViewBitmap.getPixel(0,0)} error: ${GLES20.glGetError()}")
+    }
+
+    private fun fitTextureCoord(targetSize: Size){
+        val compoundFactor: Float = targetSize.height.toFloat() / (targetSize.width * screenRatio)
+        val textureCoords = floatArrayOf(
+            0f, 0f,
+            (1f + compoundFactor) / 2f, 1f,
+            (1f + compoundFactor) / 2f, 0f,
+            0f, 1f,
+        )
+
+        with(textureBuffer){
+            put(textureCoords)
+            position(0)
+        }
+
         GLES20.glGetAttribLocation(mProgram, "texCoord").run {
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[2]);
@@ -212,40 +253,6 @@ class LiveCameraView(screenRatio: Float) {
                 0
             )
         }
-        loadTexture()
-
-        GLES20.glGetUniformLocation(mProgram, "u_Texture").run {
-            GLES20.glUniform1i(this, 0)
-        }
-    }
-
-    private fun loadTexture(){
-        GLES20.glGenTextures(1, texture);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0])
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0)
-        GLES20.glFlush()
-    }
-
-    private fun reloadTexture(){
-        GLES20.glUseProgram(mProgram)
-        GLES20.glDeleteTextures(1, texture)
-        GLES20.glGenTextures(1, texture);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0])
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        try {
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0)
-        }catch (e: Exception){
-            Timber.e(e);
-        }
-        GLES20.glFlush()
-        Timber.d("Bitmap is updated, ${textureBitmap.width}:${textureBitmap.height}, ${textureBitmap.getPixel(0,0)} error: ${GLES20.glGetError()}")
     }
 
     fun draw() {

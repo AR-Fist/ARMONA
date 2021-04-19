@@ -74,8 +74,6 @@ class ArFragment : Fragment() {
             Log.e("OpenCV", "Load fail")
         }
 
-
-
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
         return binding.root
     }
