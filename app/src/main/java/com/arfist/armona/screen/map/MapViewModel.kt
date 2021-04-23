@@ -7,6 +7,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.arfist.armona.getStringFormat
 import com.arfist.armona.services.LocationRepository
+import com.arfist.armona.services.LowestMetres
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -59,6 +62,11 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
             }
         }
     }
+
+    fun getOffsetDirection() = locationRepository.calculateOffsetDirectionLocation()
+    fun getOffsetFacing() = locationRepository.calculateOffsetFacingLocation()
+    fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()
+    fun getOffsetBearing(bearing: Double) = locationRepository.calculateOffsetBearing(bearing)
 //    fun getDirection(destination: String) = locationRepository.getDirection(destination)
 
 }

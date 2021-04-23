@@ -13,9 +13,11 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.maps.android.SphericalUtil
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.launch
@@ -25,7 +27,9 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
+import kotlin.math.PI
 
+const val LowestMetres: Double = 5.0
 // This will be ref from while-in-use-location, LocationUpdateForeground, LocationUpdateBackGround
 class LocationRepository private constructor(context: Context){
 
@@ -60,8 +64,8 @@ class LocationRepository private constructor(context: Context){
 
     // Location requester
     private val locationRequest = LocationRequest().apply {
-        interval = TimeUnit.SECONDS.toMillis(6)
-        fastestInterval = TimeUnit.SECONDS.toMillis(3)
+        interval = TimeUnit.SECONDS.toMillis(1)
+        fastestInterval = TimeUnit.SECONDS.toMillis(1)
         maxWaitTime = TimeUnit.MINUTES.toMillis(2)
         priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
@@ -210,7 +214,6 @@ class LocationRepository private constructor(context: Context){
         }
     }
 
-    val lowestMetres = 10
     fun getBearingToNextPosition(): Float {
         /**
          * 1. Check if distance between current location and next stop is lower than an epsilon
@@ -229,7 +232,7 @@ class LocationRepository private constructor(context: Context){
                 it.lat!!, it.lng!!, result)
         }
 
-        if (result[0] < lowestMetres) {
+        if (result[0] < LowestMetres) {
             incrementCounting()
             getNextStop()?.let {
                 Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
@@ -250,6 +253,27 @@ class LocationRepository private constructor(context: Context){
 //            Timber.e(e)
 //        }
 //    }
+
+    val arrowLength = 50.0
+    fun calculateOffsetDirectionLocation(): LatLng {
+        return SphericalUtil.computeOffset(LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude), arrowLength, getBearingToNextPosition().toDouble())
+    }
+
+    fun calculateOffsetFacingLocation(): LatLng {
+        return  SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, getFacingBearing()*180/ PI)
+    }
+
+    fun calculateOffsetNorthLocation(): LatLng {
+        return SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, 0.0)
+    }
+
+    private fun getFacingBearing(): Double {
+        return 0.0
+    }
+
+    fun calculateOffsetBearing(bearing: Double): LatLng {
+        return SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, bearing)
+    }
 }
 
 interface MapApi {

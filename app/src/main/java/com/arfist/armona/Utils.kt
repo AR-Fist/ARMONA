@@ -137,4 +137,13 @@ class Quaternion(
         euler[0] = atan2(sycp, cycp)
         return euler
     }
+
+    fun Inverse(): Quaternion {
+        return Quaternion(
+            this.w,
+            -this.x,
+            -this.y,
+            -this.z
+        )
+    }
 }

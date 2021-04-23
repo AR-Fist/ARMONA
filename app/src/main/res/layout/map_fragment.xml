@@ -7,6 +7,9 @@
         <variable
             name="mapViewModel"
             type="com.arfist.armona.screen.map.MapViewModel" />
+        <variable
+            name="ArViewModel"
+            type="com.arfist.armona.screen.ar.ArViewModel" />
     </data>
 
     <FrameLayout

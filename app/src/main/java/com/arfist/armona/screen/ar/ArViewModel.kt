@@ -67,6 +67,18 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val arrowRotation: LiveData<FloatArray>
         get() = _arrowRotation
 
+    private val _arrowRotationInverse = MutableLiveData<FloatArray>()
+    val arrowRotationInverse: LiveData<FloatArray>
+        get() = _arrowRotationInverse
+
+    private val _arrowRotationBase = MutableLiveData<FloatArray>()
+    val arrowRotationBase: LiveData<FloatArray>
+        get() = _arrowRotationBase
+
+    private val _arrowRotationInverseBase = MutableLiveData<FloatArray>()
+    val arrowRotationInverseBase: LiveData<FloatArray>
+        get() = _arrowRotationInverseBase
+
     fun registerSensors() = sensorsRepository.registerSensors()
 
     fun unregisterSensors() = sensorsRepository.unregisterSensors()
@@ -119,8 +131,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler() + floatArrayOf(timestamp.toFloat())
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
-            calculateArrowRotation()
 
+            calculateArrowRotation()
         } catch (e: Exception) {
             Timber.e(e)
         }
@@ -208,7 +220,17 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         val arrowRotationWorld = Quaternion(cos((360-bearing)/2), 0f, 0f, sin((360-bearing)/2))
         // This is the rotation of the arrow in the local as quaternion
         val arrowRotationLocal = arrowRotationWorld*complementaryFilter.rotationQuaternion
+        val arrowRotationLocalInverse = arrowRotationWorld*complementaryFilter.rotationQuaternion.Inverse()
         // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
+
         _arrowRotation.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        _arrowRotationInverse.value = arrowRotationLocalInverse.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+
+        val rotvectemp = rotationVector.value!!.values
+        val rotvecquat = Quaternion(rotvectemp[0], rotvectemp[1], rotvectemp[2], rotvectemp[3])
+        val arrowRotationLocalBase = arrowRotationWorld*rotvecquat
+        val arrowRotationLocalInverseBase = arrowRotationWorld*rotvecquat.Inverse()
+        _arrowRotationBase.value = arrowRotationLocalBase.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        _arrowRotationInverseBase.value = arrowRotationLocalInverseBase.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }
