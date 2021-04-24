@@ -37,7 +37,7 @@ class ArFragment : Fragment() {
     private val graphs = ArrayList<GraphView>()
     private val series = ArrayList<LineGraphSeries<DataPoint>>()
 
-    private val graphSize = 5
+    private val graphSize = 6
     private val dataSize = 3
     private val seriesSize = graphSize*dataSize
 
@@ -77,6 +77,7 @@ class ArFragment : Fragment() {
             getOrientation(it.timestamp)
             val quat = Quaternion(it.values[0], it.values[1], it.values[2], it.values[3])
             val rotvecang = quat.toEuler()
+            Log.i("Rotvec", "${rotvecang[0]}, ${rotvecang[1]}, ${rotvecang[2]}")
             series.appendData(it.timestamp.toDouble(), rotvecang, 0)
         })
 
@@ -84,16 +85,20 @@ class ArFragment : Fragment() {
             series.appendData(it[3].toDouble(), it, 1)
         })
 
-        binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
+        binding.arViewModel!!.myOrientationAngle.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 2)
         })
 
-        binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
+        binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 3)
         })
 
-        binding.arViewModel!!.arrowRotation.observe(viewLifecycleOwner, {
+        binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 4)
+        })
+
+        binding.arViewModel!!.arrowRotation.observe(viewLifecycleOwner, {
+            series.appendData(it[3].toDouble(), it, 5)
         })
     }
 
@@ -110,6 +115,7 @@ class ArFragment : Fragment() {
         graphs.add(requireView().findViewById(R.id.graphRotVec))
         graphs.add(requireView().findViewById(R.id.graphGGOrient))
         graphs.add(requireView().findViewById(R.id.graphComplementary))
+        graphs.add(requireView().findViewById(R.id.graphMyOrient))
         graphs.add(requireView().findViewById(R.id.graphKalman))
         graphs.add(requireView().findViewById(R.id.graphArrow))
 

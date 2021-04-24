@@ -80,9 +80,10 @@ class ComplementaryFilter(val alpha: Float) {
 
     fun filter(gyroscopeData: FloatArray, accelerometerMagnetometerRotation: Quaternion, deltaTime: Float ) {
 //        val alpha =  timeConstant / (timeConstant+dt)
-        val gyroscopeRotation = getGyroscopeRotation(gyroscopeData, deltaTime)
-        val rotationVectorGyroscope = rotationQuaternion*gyroscopeRotation
-        rotationQuaternion = ((accelerometerMagnetometerRotation * ((1-alpha).toFloat())) + (rotationVectorGyroscope * alpha.toFloat())).getNormalize()
+//        val rotationVectorGyroscope = getGyroscopeRotation(gyroscopeData, deltaTime)*rotationQuaternion
+        val rotationVectorGyroscope = rotationQuaternion * getGyroscopeRotation(gyroscopeData, deltaTime)
+        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) * (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
+//        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) + (rotationVectorGyroscope * (1-alpha).toFloat()))
     }
 
     private fun getGyroscopeRotation(gyroscopeData: FloatArray, deltaTime: Float): Quaternion {
@@ -114,14 +115,14 @@ class ExtendedKalmanFilter() {
     var xHatBar = zeros(7, 1) // (7, 1)
     var xHatPrev = zeros(7, 1) // (7, 1)
     var yHatBar = zeros(6, 1) // (6, 1)
-    var pBar = zeros(7, 7) // (7, 7)
+    var PBar = zeros(7, 7) // (7, 7)
     var Sq = zeros(4, 3) // (4, 3)
     var A = eye(7) // (7, 7)
     var B = zeros(7, 3) // (7, 3)
     var C = zeros(6, 7) // (6, 7)
-    var P = eye(7) // (7, 7)
-    var Q = eye(7) // (7, 7)
-    var R = eye(6) // (6, 6)
+    var P = eye(7)*0.01 // (7, 7)
+    var Q = eye(7)*0.001 // (7, 7)
+    var R = eye(6)*0.1 // (6, 6)
     var K = zeros(7, 6) // (7, 6)
     val magReference = mat[0, -1, 0].transpose() // (3, 1)
     val accelReference = mat[0, 0, -1].transpose() // (3, 1)
@@ -148,17 +149,17 @@ class ExtendedKalmanFilter() {
         yHatBar = predictAccelMag()
 
         //
-        pBar = (A*P * A.transpose()) + Q
+        PBar = (A*P * A.transpose()) + Q
 
     }
 
     fun update(accelerometerData: DoubleArray, magnetoMeterData: DoubleArray) {
-        K = pBar*C.transpose()*(C*pBar*C.transpose() + R).inv()
+        K = (PBar*C.transpose())*((C*PBar*C.transpose() + R).inv())
         val m = create(doubleArrayOf(accelerometerData[0], accelerometerData[1], accelerometerData[2], magnetoMeterData[0], magnetoMeterData[1], magnetoMeterData[2])).transpose()
         xHat = xHatBar + K*(m - yHatBar)
         xHat[0..3, 0] = normalizeQuaternion(xHat[0..3, 0])
 
-        P = (eye(7) - (K*C))*pBar
+        P = (eye(7) - (K*C))*PBar
     }
 
     private fun normalizeQuaternion(matrix: Matrix<Double>): Matrix<Double> {

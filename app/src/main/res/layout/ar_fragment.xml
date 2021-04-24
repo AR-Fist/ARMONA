@@ -44,6 +44,13 @@
                     tools:ignore="HardcodedText" />
 
                 <com.jjoe64.graphview.GraphView
+                    android:id="@+id/graphMyOrient"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:title="ComplementaryFilter"
+                    tools:ignore="HardcodedText" />
+
+                <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphKalman"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
