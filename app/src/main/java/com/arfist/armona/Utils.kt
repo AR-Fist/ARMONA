@@ -40,6 +40,22 @@ fun FloatArray.toDouble() : DoubleArray {
     return result
 }
 
+fun Float.DegToRad(): Float {
+    return (this*PI/180).toFloat()
+}
+
+fun Float.RadToDeg(): Float {
+    return (this*180/ PI).toFloat()
+}
+
+fun Double.DegToRad(): Double {
+    return this*PI/180
+}
+
+fun Double.RadToDeg(): Double {
+    return this*180/PI
+}
+
 class Quaternion(
     val w: Float,
     val x: Float,
@@ -87,7 +103,7 @@ class Quaternion(
         )
     }
     companion object {
-        fun fromRotationMatrix(rotationMatrix: Matrix<Double>): Quaternion {
+        fun FromRotationMatrix(rotationMatrix: Matrix<Double>): Quaternion {
             // From wiki
             val trace = rotationMatrix[0, 0] + rotationMatrix[1, 1] + rotationMatrix[2, 2]
             if (trace > 0) {
@@ -128,12 +144,95 @@ class Quaternion(
             }
         }
 
+        fun FromRotationMatrix2(rotationMatrix: Matrix<Double>): Quaternion {
+            // From cloud
+            val trace = rotationMatrix[0, 0] + rotationMatrix[1, 1] + rotationMatrix[2, 2]
+            if (trace > 0) {
+                val w = sqrt(1 + trace) / 2
+                return Quaternion(
+                    w.toFloat(),
+                    ((rotationMatrix[1, 2] - rotationMatrix[2, 1]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[2, 0] - rotationMatrix[0, 2]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[0, 1] - rotationMatrix[1, 0]) / (4 * w)).toFloat()
+                )
+            } else if (rotationMatrix[0, 0] > rotationMatrix[1, 1] && rotationMatrix[0, 0] > rotationMatrix[2, 2]) {
+                val w =
+                    sqrt(1 + rotationMatrix[0, 0] - rotationMatrix[1, 1] - rotationMatrix[2, 2]) / 2
+                return Quaternion(
+                    ((rotationMatrix[1, 2] - rotationMatrix[2, 1]) / (4 * w)).toFloat(),
+                    w.toFloat(),
+                    ((rotationMatrix[1, 0] + rotationMatrix[0, 1]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[2, 0] + rotationMatrix[0, 2]) / (4 * w)).toFloat()
+                )
+            } else if (rotationMatrix[1, 1] > rotationMatrix[2, 2]) {
+                val w =
+                    sqrt(1 - rotationMatrix[0, 0] + rotationMatrix[1, 1] - rotationMatrix[2, 2]) / 2
+                return Quaternion(
+                    ((rotationMatrix[2, 0] - rotationMatrix[0, 2]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[1, 0] + rotationMatrix[0, 1]) / (4 * w)).toFloat(),
+                    w.toFloat(),
+                    ((rotationMatrix[2, 1] + rotationMatrix[1, 2]) / (4 * w)).toFloat(),
+                )
+            } else {
+                val w =
+                    sqrt(1 - rotationMatrix[0, 0] - rotationMatrix[1, 1] + rotationMatrix[2, 2]) / 2
+                return Quaternion(
+                    ((rotationMatrix[0, 1] - rotationMatrix[1, 0]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[2, 0] + rotationMatrix[0, 2]) / (4 * w)).toFloat(),
+                    ((rotationMatrix[2, 1] + rotationMatrix[1, 2]) / (4 * w)).toFloat(),
+                    w.toFloat()
+                )
+            }
+        }
+
+        fun FromRotationMatrix3(rotationMatrix: Matrix<Double>): Quaternion {
+            var t = 0.0
+            var quat = Quaternion(1f, 0f, 0f, 0f)
+            if (rotationMatrix[2, 2] < 0) {
+                if (rotationMatrix[0, 0] > rotationMatrix[1, 1]) {
+                    t = 1 + rotationMatrix[0, 0] - rotationMatrix[1, 1] - rotationMatrix[2, 2]
+                    quat =  Quaternion(
+                        (rotationMatrix[1, 2] - rotationMatrix[2, 1]).toFloat(),
+                        t.toFloat(),
+                        (rotationMatrix[0, 1] + rotationMatrix[1, 0]).toFloat(),
+                        (rotationMatrix[2, 0] + rotationMatrix[0, 2]).toFloat())
+                } else {
+                    t = 1 - rotationMatrix[0, 0] + rotationMatrix[1, 1] - rotationMatrix[2, 2]
+                    quat = Quaternion(
+                        (rotationMatrix[2, 0] - rotationMatrix[0, 2]).toFloat(),
+                        (rotationMatrix[0, 1] + rotationMatrix[1, 0]).toFloat(),
+                        t.toFloat(),
+                        (rotationMatrix[1, 2] + rotationMatrix[2, 1]).toFloat()
+                    )
+                }
+            } else {
+                if (rotationMatrix[0, 0] < -rotationMatrix[1, 1]) {
+                    t = 1 - rotationMatrix[0, 0] - rotationMatrix[1, 1] + rotationMatrix[2, 2]
+                    quat = Quaternion(
+                        (rotationMatrix[0, 1] - rotationMatrix[1, 0]).toFloat(),
+                        (rotationMatrix[2, 0] + rotationMatrix[0, 2]).toFloat(),
+                        (rotationMatrix[1, 2] + rotationMatrix[2, 1]).toFloat(),
+                        t.toFloat(),
+                    )
+                } else {
+                    t = 1 + rotationMatrix[0, 0] + rotationMatrix[1, 1] + rotationMatrix[2, 2]
+                    quat = Quaternion(
+                        t.toFloat(),
+                        (rotationMatrix[1, 2] - rotationMatrix[2, 1]).toFloat(),
+                        (rotationMatrix[2, 0] - rotationMatrix[0, 2]).toFloat(),
+                        (rotationMatrix[0, 1] - rotationMatrix[1,0]).toFloat()
+                    )
+                }
+            }
+            return quat * (0.5 / sqrt(t)).toFloat()
+        }
+
         fun FromEuler(euler: FloatArray): Quaternion {
             // yaw pitch roll
             // from wiki: Conversion between quaternion and euler
-            val yaw = euler[0] / 2
-            val pitch = euler[1] / 2
-            val roll = euler[2] / 2
+            val yaw = euler[0] * 0.5
+            val pitch = euler[1] * 0.5
+            val roll = euler[2] * 0.5
             val cosYaw = cos(yaw)
             val sinYaw = sin(yaw)
             val cosPitch = cos(pitch)
@@ -142,10 +241,10 @@ class Quaternion(
             val sinRoll = sin(roll)
 
             return Quaternion(
-                cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw,
-                sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw,
-                cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw,
-                cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw
+                (cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw).toFloat(),
+                (sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw).toFloat(),
+                (cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw).toFloat(),
+                (cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw).toFloat()
             )
         }
     }
@@ -165,6 +264,24 @@ class Quaternion(
     }
 
     fun toEuler(): FloatArray {
+        // Euler angles as yaw, pitch, roll
+        // from wiki: Conversion between quaternion and euler
+        val euler = FloatArray(3)
+        val srcp = 2*(this.w*this.x+this.y*this.z)
+        val crcp = 1 - 2*(this.x*this.x+this.y*this.y)
+        euler[2] = atan2(srcp, crcp)
+
+        val sp = 2*(this.w*this.y-this.z*this.x)
+
+        euler[1] = if(abs(sp) >= 1 ) (PI/2 * sp.sign).toFloat() else asin(sp)
+
+        val sycp = 2*(this.w*this.z+this.x*this.y)
+        val cycp = 1 - 2*(this.y*this.y+this.z*this.z)
+        euler[0] = atan2(sycp, cycp)
+        return euler
+    }
+
+    fun toEuler3(): FloatArray {
         // Euler angles as yaw, pitch, roll
         // from wiki: Conversion between quaternion and euler
         val euler = FloatArray(3)

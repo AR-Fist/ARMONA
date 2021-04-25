@@ -18,6 +18,7 @@ import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
 import com.arfist.armona.MainActivity.Companion.permissionList
 import com.arfist.armona.Quaternion
 import com.arfist.armona.R
+import com.arfist.armona.RadToDeg
 import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.hasPermission
 import com.arfist.armona.screen.ar.ArViewModel
@@ -89,13 +90,16 @@ class MapFragment : Fragment() {
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
             getOrientation(it.timestamp)
             if (direction != null
-                && ::polyline1.isInitialized
-                && ::polyline2.isInitialized
-                && ::polyline3.isInitialized
-                && ::polyline4.isInitialized
-                && ::polyline5.isInitialized
-                && ::polyline6.isInitialized
-//                && ::polyline7.isInitialized
+                && ::polylineBlack.isInitialized
+                && ::polylineGray.isInitialized
+                && ::polylineRed.isInitialized
+                && ::polylineGreen.isInitialized
+                && ::polylineBlue.isInitialized
+                && ::polylineCyan.isInitialized
+                && ::polylineMagenta.isInitialized
+                && ::polylineYellow.isInitialized
+                && ::polylineWhite.isInitialized
+                && ::polylinePurple.isInitialized
             ) {
                 updatePointing()
             }
@@ -232,103 +236,82 @@ class MapFragment : Fragment() {
 
         testPointing()
     }
-    lateinit var polyline1: Polyline
-    lateinit var polyline2: Polyline
-    lateinit var polyline3: Polyline
-    lateinit var polyline4: Polyline
-    lateinit var polyline5: Polyline
-    lateinit var polyline6: Polyline
-//    lateinit var polyline7: Polyline
-//    lateinit var polyline8: Polyline
+    lateinit var polylineBlack: Polyline
+    lateinit var polylineGray: Polyline
+    lateinit var polylineRed: Polyline
+    lateinit var polylineGreen: Polyline
+    lateinit var polylineBlue: Polyline
+    lateinit var polylineCyan: Polyline
+    lateinit var polylineMagenta: Polyline
+    lateinit var polylineYellow: Polyline
+    lateinit var polylineWhite: Polyline
+    lateinit var polylinePurple: Polyline
     private fun testPointing() {
         val latlngDirection = mapViewModel.getOffsetDirection()
         val north = mapViewModel.getOffsetNorth()
         val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
-        // Bearing only
-        polyline1 = googleMap.addPolyline(PolylineOptions()
+        polylineBlack = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, latlngDirection))
             .clickable(false)
             .color(Color.BLACK))
-        // Google orientation
-        polyline2 = googleMap.addPolyline(PolylineOptions()
+        polylineGray = googleMap.addPolyline(PolylineOptions()
+            .addAll(arrayListOf(currentLatLng, north))
+            .clickable(false)
+            .color(Color.GRAY))
+        polylineRed = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.RED))
-        // My orientation
-        polyline3 = googleMap.addPolyline(PolylineOptions()
+        polylineGreen = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.GREEN))
-        // Arrow with my orientation euler
-        polyline4 = googleMap.addPolyline(PolylineOptions()
+        polylineBlue = googleMap.addPolyline(PolylineOptions()
+            .addAll(arrayListOf(currentLatLng, north))
+            .clickable(false)
+            .color(Color.BLUE))
+        polylineCyan = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.CYAN))
-        // Arrow with my orientation rotation matrix
-        polyline5 = googleMap.addPolyline(PolylineOptions()
+        polylineMagenta = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.MAGENTA))
-    polyline6 = googleMap.addPolyline(PolylineOptions()
-        .addAll(arrayListOf(currentLatLng, north))
-        .clickable(false)
-        .color(Color.YELLOW))
-        // My orientation
-//        // Facing
-//        polyline2 = googleMap.addPolyline(PolylineOptions()
-//            .addAll(arrayListOf(currentLatLng, latlngfacing))
-//            .clickable(false)
-//            .color(Color.RED))
+        polylineYellow = googleMap.addPolyline(PolylineOptions()
+            .addAll(arrayListOf(currentLatLng, north))
+            .clickable(false)
+            .color(Color.YELLOW))
+        polylineWhite = googleMap.addPolyline(PolylineOptions()
+            .addAll(arrayListOf(currentLatLng, north))
+            .clickable(false)
+            .color(Color.WHITE))
+        polylinePurple = googleMap.addPolyline(PolylineOptions()
+            .addAll(arrayListOf(currentLatLng, north))
+            .clickable(false)
+            .color(Color.argb(255, 153, 0, 255)))
     }
 
     private fun updatePointing() {
         val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
         // Bearing
-        polyline1.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDirection())
+        polylineBlack.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDirection())
 
-        val bearingGGO = arViewModel.mGoogleOrientation.value!![0]*180/ PI
-        polyline2.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingGGO))
+        val facing = arViewModel.mGoogleOrientation.value!![0]*180/ PI
+        polylineGray.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(facing))
 
-        val bearingMy = arViewModel.myOrientationAngle.value!![0]*180/ PI
-        polyline3.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingMy))
+        val rotvec = arViewModel.rotationVector.value!!.values
+        val facing2 = Quaternion(rotvec[3], rotvec[0], rotvec[1], rotvec[2]).toEuler()[0]*180/ PI
+        polylineRed.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing2))
 
-        var bearingEuler = arViewModel.arrowRotationOrientation.value!![0]*180/ PI
-        bearingEuler = (bearingMy+bearingEuler) % 360
-        polyline4.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingEuler))
+        val facing3 = arViewModel.complementaryAngle.value!![0]*180/ PI
+        polylineGreen.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing3))
 
-        var bearingRotMat = arViewModel.arrowRotationOrientationRot.value!![0]*180/ PI
-        bearingRotMat = (bearingMy+bearingRotMat) % 360
-        polyline5.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingRotMat))
+        val facing4 = arViewModel.extendedKalman.value!![0]*180/ PI
+        polylineBlue.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing4))
 
-        var bearingRotMatTest = arViewModel.arrowRotationOrientationRotTest.value!![0]*180/ PI
-        bearingRotMatTest = (bearingMy+bearingRotMatTest) % 360
-        polyline6.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingRotMatTest))
-
-//        // Facing
-//        val facing = arViewModel.complementaryAngle.value!![0]*180/ PI
-//        polyline2.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(facing))
-//        // Arrow rotation
-//        var bearing = arViewModel.arrowRotation.value!![0]*180/PI
-//        bearing = (facing+bearing) % 360
-//        polyline3.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearing))
-//        // Arrow rotation inverse
-//        var bearingInverse = arViewModel.arrowRotationInverse.value!![0]*180/ PI
-//        bearingInverse = (facing+bearingInverse) % 360
-//        polyline4.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(bearingInverse))
-//        // Google orientation
-//        polyline5.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(arViewModel.mGoogleOrientation.value!![0].toDouble()*180/ PI))
-//        // Rotation vector orientation
-//        val rotvectemp = arViewModel.rotationVector.value!!.values
-//        val rtt = Quaternion(rotvectemp[0], rotvectemp[1], rotvectemp[2], rotvectemp[3]).toEuler()
-////        val rtt = Quaternion(rotvectemp[0], rotvectemp[1], rotvectemp[2], rotvectemp[3]).oldToEuler()
-//        polyline6.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(rtt[0].toDouble()*180/ PI))
-////        // Rotation vector base
-//        var rvBearing = arViewModel.arrowRotationBase.value!![0]*180/ PI
-//        rvBearing = (rtt[0] + rvBearing) % 360
-//        polyline7.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(rvBearing))
-//        var rvIBearing = arViewModel.arrowRotationInverseBase.value!![0]*180/ PI
-//        rvIBearing = (rtt[0] + rvIBearing) % 360
-//        polyline8.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(rvIBearing))
+        val degree = arViewModel.testAngle.value!![0].RadToDeg()
+        polylinePurple.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(degree.toDouble()))
     }
 
     override fun onStart() {

@@ -82,8 +82,8 @@ class ComplementaryFilter(val alpha: Float) {
 //        val alpha =  timeConstant / (timeConstant+dt)
 //        val rotationVectorGyroscope = getGyroscopeRotation(gyroscopeData, deltaTime)*rotationQuaternion
         val rotationVectorGyroscope = rotationQuaternion * getGyroscopeRotation(gyroscopeData, deltaTime)
-        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) * (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
-//        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) + (rotationVectorGyroscope * (1-alpha).toFloat()))
+//        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) * (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
+        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) + (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
     }
 
     private fun getGyroscopeRotation(gyroscopeData: FloatArray, deltaTime: Float): Quaternion {

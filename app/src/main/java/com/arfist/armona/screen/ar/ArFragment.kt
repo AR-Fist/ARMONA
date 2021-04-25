@@ -37,7 +37,7 @@ class ArFragment : Fragment() {
     private val graphs = ArrayList<GraphView>()
     private val series = ArrayList<LineGraphSeries<DataPoint>>()
 
-    private val graphSize = 6
+    private val graphSize = 5
     private val dataSize = 3
     private val seriesSize = graphSize*dataSize
 
@@ -73,32 +73,27 @@ class ArFragment : Fragment() {
 
     @SuppressLint("LogNotTimber")
     private fun observeSensors() {
-        binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
-            getOrientation(it.timestamp)
-            val quat = Quaternion(it.values[0], it.values[1], it.values[2], it.values[3])
-            val rotvecang = quat.toEuler()
-            Log.i("Rotvec", "${rotvecang[0]}, ${rotvecang[1]}, ${rotvecang[2]}")
-            series.appendData(it.timestamp.toDouble(), rotvecang, 0)
-        })
 
         binding.arViewModel!!.mGoogleOrientation.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 1)
+            series.appendData(it[3].toDouble(), it, 0)
         })
 
         binding.arViewModel!!.myOrientationAngle.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 2)
+            series.appendData(it[3].toDouble(), it, 1)
         })
 
         binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 3)
+            series.appendData(it[3].toDouble(), it, 2)
         })
 
         binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 4)
+            series.appendData(it[3].toDouble(), it, 3)
         })
 
-        binding.arViewModel!!.arrowRotation.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 5)
+        binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
+            getOrientation(it.timestamp)
+            val rotvecang = Quaternion(it.values[3], it.values[0], it.values[1], it.values[2]).toEuler()
+            series.appendData(it.timestamp.toDouble(), rotvecang, 4)
         })
     }
 

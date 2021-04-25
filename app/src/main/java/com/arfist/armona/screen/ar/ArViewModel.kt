@@ -7,15 +7,11 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.arfist.armona.Quaternion
-import com.arfist.armona.cross
-import com.arfist.armona.normalize
+import com.arfist.armona.*
 import com.arfist.armona.services.*
-import com.arfist.armona.toDouble
 import koma.create
 import koma.extensions.get
 import koma.extensions.set
-import koma.mat
 import koma.matrix.Matrix
 import koma.zeros
 import timber.log.Timber
@@ -67,33 +63,15 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val myOrientationAngle: LiveData<FloatArray>
         get() = _myOrientationAngle
 
+    // Arrow rotation
     private val _arrowRotation = MutableLiveData<FloatArray>()
     val arrowRotation: LiveData<FloatArray>
         get() = _arrowRotation
 
-    private val _arrowRotationOrientation = MutableLiveData<FloatArray>()
-    val arrowRotationOrientation: LiveData<FloatArray>
-        get() = _arrowRotationOrientation
-
-    private val _arrowRotationOrientationRot = MutableLiveData<FloatArray>()
-    val arrowRotationOrientationRot: LiveData<FloatArray>
-        get() = _arrowRotationOrientationRot
-
-    private val _arrowRotationOrientationRotTest = MutableLiveData<FloatArray>()
-    val arrowRotationOrientationRotTest: LiveData<FloatArray>
-        get() = _arrowRotationOrientationRotTest
-
-//    private val _arrowRotationInverse = MutableLiveData<FloatArray>()
-//    val arrowRotationInverse: LiveData<FloatArray>
-//        get() = _arrowRotationInverse
-//
-//    private val _arrowRotationBase = MutableLiveData<FloatArray>()
-//    val arrowRotationBase: LiveData<FloatArray>
-//        get() = _arrowRotationBase
-//
-//    private val _arrowRotationInverseBase = MutableLiveData<FloatArray>()
-//    val arrowRotationInverseBase: LiveData<FloatArray>
-//        get() = _arrowRotationInverseBase
+    // Test purpose
+    private val _testAngle = MutableLiveData<FloatArray>()
+    val testAngle: LiveData<FloatArray>
+        get() = _testAngle
 
     fun registerSensors() = sensorsRepository.registerSensors()
 
@@ -126,7 +104,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             // Implemented
             // Orientation from only accelerometer and magnetometer
             myRotationMatrix = calculateRotationMatrix(accelerometer.value!!.values, magnetometer.value!!.values)
-            myRotationVector = Quaternion.fromRotationMatrix(myRotationMatrix)
+            myRotationVector = Quaternion.FromRotationMatrix(myRotationMatrix)
             val myOrientationAngles = calculateMyOrientationAngle(myRotationMatrix)
 
 //            val myGravityRotationMatrix = calculateRotationMatrix(gravity.value!!.values, magnetometer.value!!.values)
@@ -147,6 +125,10 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler() + floatArrayOf(timestamp.toFloat())
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
+
+            Log.i("ExtendedKalman", "${xHat[0]}, ${xHat[1]}, ${xHat[2]}. ${xHat[3]}")
+            Log.i("RotationVector", "${rotationVector.value!!.values[3]}, ${rotationVector.value!!.values[0]}, ${rotationVector.value!!.values[1]}, ${rotationVector.value!!.values[2]}")
+            Log.i("MyRotationVector", "${myRotationVector.w}")
 
             calculateArrowRotation()
         } catch (e: Exception) {
@@ -199,27 +181,14 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
          * The (3) will calculated by sensors with some filter
          */
         val bearing = locationRepository.getBearingToNextPosition()
+        val degree = locationRepository.BearingToDegree(bearing)
         // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
-        val arrowRotationWorld = Quaternion(cos((360-bearing)/2), 0f, 0f, sin((360-bearing)/2))
-        // This is the rotation of the arrow in the local as quaternion
-//        val arrowRotationLocal = arrowRotationWorld*complementaryFilter.rotationQuaternion
-//        val arrowRotationLocalInverse = arrowRotationWorld*complementaryFilter.rotationQuaternion.Inverse()
-        // This return euler rotation as array of float with size 3 respect to yaw, pitch and roll
+        val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
 
-//        _arrowRotation.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
-//        _arrowRotationInverse.value = arrowRotationLocalInverse.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        val arrowRotationLocal = arrowRotationWorld*myRotationVector
+        _arrowRotation.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
 
-        val orientationEuler = Quaternion.FromEuler(_myOrientationAngle.value!!)
-        _arrowRotationOrientation.value = (arrowRotationWorld*orientationEuler).toEuler() + floatArrayOf(lastTimestamp.toFloat())
-        val orientationRotMat = Quaternion.fromRotationMatrix(myRotationMatrix)
-        _arrowRotationOrientationRot.value = (arrowRotationWorld*orientationRotMat).toEuler() + floatArrayOf(lastTimestamp.toFloat())
-        _arrowRotationOrientationRotTest.value = ((orientationRotMat*arrowRotationWorld).toEuler() + floatArrayOf(lastTimestamp.toFloat()))
-//
-//        val rotvectemp = rotationVector.value!!.values
-//        val rotvecquat = Quaternion(rotvectemp[0], rotvectemp[1], rotvectemp[2], rotvectemp[3])
-//        val arrowRotationLocalBase = arrowRotationWorld*rotvecquat
-//        val arrowRotationLocalInverseBase = arrowRotationWorld*rotvecquat.Inverse()
-//        _arrowRotationBase.value = arrowRotationLocalBase.toEuler() + floatArrayOf(lastTimestamp.toFloat())
-//        _arrowRotationInverseBase.value = arrowRotationLocalInverseBase.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        val test = arrowRotationLocal*myRotationVector.Inverse()
+        _testAngle.value = test.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }

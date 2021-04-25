@@ -64,9 +64,9 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     }
 
     fun getOffsetDirection() = locationRepository.calculateOffsetDirectionLocation()
-    fun getOffsetFacing() = locationRepository.calculateOffsetFacingLocation()
     fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()
     fun getOffsetBearing(bearing: Double) = locationRepository.calculateOffsetBearing(bearing)
+    fun getOffsetDegree(degree: Double) = locationRepository.calculateOffsetDegree(degree)
 //    fun getDirection(destination: String) = locationRepository.getDirection(destination)
 
 }

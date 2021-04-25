@@ -28,6 +28,7 @@ import retrofit2.http.Query
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
+import kotlin.math.abs
 
 const val LowestMetres: Double = 5.0
 // This will be ref from while-in-use-location, LocationUpdateForeground, LocationUpdateBackGround
@@ -254,25 +255,79 @@ class LocationRepository private constructor(context: Context){
 //        }
 //    }
 
+    fun BearingToDegree(bearing: Float): Float {
+        /**
+         * Input: Bearing [-180, 180]
+         * Output: Degree [-180, 180]
+         */
+
+        return if(-90 <= bearing && bearing < 0) {
+            90 + abs(bearing)
+        } else if(-180 <= bearing && bearing < -90) {
+            -(bearing + 270)
+        } else
+            90 - bearing
+    }
+
+    fun DegreeToBearing(degree: Float): Float {
+        /**
+         * Input: Degree [-180, 180]
+         * Output: Bearing [-180, 180]
+         */
+
+        return if (-90 <= degree && degree < 0) {
+            90 + abs(degree)
+        } else if(-180 <= degree && degree < -90) {
+            -(degree + 270)
+        } else {
+            90 - degree
+        }
+    }
+
+    fun BearingToDegree(bearing: Double): Double {
+        /**
+         * Input: Bearing [-180, 180]
+         * Output: Degree [-180, 180]
+         */
+
+        return if(-90 <= bearing && bearing < 0) {
+            90 + abs(bearing)
+        } else if(-180 <= bearing && bearing < -90) {
+            -(bearing + 270)
+        } else
+            90 - bearing
+    }
+
+    fun DegreeToBearing(degree: Double): Double {
+        /**
+         * Input: Degree [-180, 180]
+         * Output: Bearing [-180, 180]
+         */
+
+        return if (-90 <= degree && degree < 0) {
+            90 + abs(degree)
+        } else if(-180 <= degree && degree < -90) {
+            -(degree + 270)
+        } else {
+            90 - degree
+        }
+    }
+
     val arrowLength = 50.0
     fun calculateOffsetDirectionLocation(): LatLng {
         return SphericalUtil.computeOffset(LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude), arrowLength, getBearingToNextPosition().toDouble())
-    }
-
-    fun calculateOffsetFacingLocation(): LatLng {
-        return  SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, getFacingBearing()*180/ PI)
     }
 
     fun calculateOffsetNorthLocation(): LatLng {
         return SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, 0.0)
     }
 
-    private fun getFacingBearing(): Double {
-        return 0.0
-    }
-
     fun calculateOffsetBearing(bearing: Double): LatLng {
         return SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, bearing)
+    }
+
+    fun calculateOffsetDegree(degree: Double): LatLng {
+        return SphericalUtil.computeOffset(_currentLocation.value?.let { LatLng(it.latitude, it.longitude) }, arrowLength, DegreeToBearing(degree))
     }
 }
 
