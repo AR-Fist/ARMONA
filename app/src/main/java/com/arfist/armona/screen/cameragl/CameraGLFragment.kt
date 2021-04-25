@@ -15,37 +15,39 @@ import java.util.concurrent.Executors
 import android.util.Size
 import android.widget.Toast
 import androidx.camera.core.*
+import androidx.fragment.app.viewModels
 import timber.log.Timber
-import java.util.concurrent.ExecutorService
 
 class CameraGLFragment: Fragment() {
 
-    private var cameraExecutor: ExecutorService? = null
+    private var cameraExecutor = Executors.newSingleThreadExecutor()
     val REQUEST_CODE_PERMISSIONS = 10
 
-    @SuppressLint("UnsafeOptInUsageError")
+    private val viewModel: CameraGLViewModel by viewModels()
+    private lateinit var renderer: CameraGLRenderer
+
+    @SuppressLint("UnsafeOptInUsageError", "Assert")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
-        // Create GLview
+        renderer = CameraGLRenderer(viewModel)
+
+        // load model
+        viewModel.model = ModelLoader(requireActivity().assets, "model").loadOBJ("arrowk2.obj")
 
         val glSurfaceView = GLSurfaceView(this.activity)
-        val renderer = CameraGLRenderer()
-
-        glSurfaceView.preserveEGLContextOnPause = true
+        glSurfaceView.setPreserveEGLContextOnPause(true)
         glSurfaceView.setEGLContextClientVersion(2)
         glSurfaceView.setRenderer(renderer)
-        glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
+//        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
+        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY)
+
 
         // listen camera
-        cameraExecutor = Executors.newSingleThreadExecutor()
-        requestPermissions(
-            REQUIRED_PERMISSIONS,
-            REQUEST_CODE_PERMISSIONS
-        )
+        requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
 
         return glSurfaceView
     }
@@ -59,7 +61,7 @@ class CameraGLFragment: Fragment() {
 
     private fun startCamera() {
         val instance = ProcessCameraProvider.getInstance(context())
-        instance.addListener(Runnable {
+        instance.addListener({
             val camera = instance.get()
 
             val preview = Preview.Builder().build() // usecase
@@ -91,7 +93,7 @@ class CameraGLFragment: Fragment() {
             val cameraSelector = CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
             // please read more about image analyser usecase
             camera.bindToLifecycle(this, cameraSelector, imageAnalyzer /*, review, imageCapture*/)
-            Timber.i("Finish Start Camera");
+            Timber.i("Finish Start Camera")
         }, ContextCompat.getMainExecutor(context()))
     }
 
