@@ -165,84 +165,7 @@ class LocationRepository private constructor(context: Context){
         }
     }
 
-    // The counting reset with get direction success
-    var route_count = 0
-    var leg_count = 0
-    var step_count = 0
-    var stopLocation: JSONLatLng? = null
-    fun getNextStop(): JSONLatLng? {
-        /**
-         * Get next step in legs in Routes in direction
-         */
-        var end_location: JSONLatLng? = null
-        if (_direction.value != null) {
-            end_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.end_location
-            }
-        return end_location
-        }
-
-    fun resetCounting() {
-        /**
-         * Reset every counting to start
-         */
-        route_count = 0
-        leg_count = 0
-        step_count = 0
-    }
-
-    fun incrementCounting() {
-        /**
-         * Increment the counting and check if it exceed or not then reset counting and may invoke end navigation
-         */
-
-        val route = _direction.value!!.routes
-        val leg = route?.get(route_count)?.legs
-        val step = leg?.get(leg_count)?.steps
-        step_count += 1
-        if (step != null) {
-            if (step_count >= step.size) {
-                leg_count += 1
-                step_count = 0
-                if (leg_count >= leg.size) {
-                    route_count += 1
-                    leg_count = 0
-                    if (route_count >= route.size){
-                        resetCounting()
-                        // May have to invoke end of navigation here
-                    }
-                }
-            }
-        }
-    }
-
-    fun getBearingToNextPosition(): Float {
-        /**
-         * 1. Check if distance between current location and next stop is lower than an epsilon
-         * 2. if yes then increment and re-calculate the next stop
-         * 3. get bearing to use as angle from north clock wise (as the range not really far the initial bearing is enough
-         * 4. use the bearing to tell which direction to point
-         *
-         */
-        if (stopLocation == null) {
-            stopLocation = getNextStop()
-        }
-
-        val result = FloatArray(3)
-        stopLocation?.let {
-            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
-                it.lat!!, it.lng!!, result)
-        }
-
-        if (result[0] < LowestMetres) {
-            incrementCounting()
-            getNextStop()?.let {
-                Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
-                    it.lat!!, it.lng!!, result)
-            }
-        }
-        return result[1]
-    }
-//    suspend fun getDirection(destination: String) {
+    //    suspend fun getDirection(destination: String) {
 ////    fun getDirection(destination: String) {
 //        Timber.i("Get direction: ${_currentLocation.value?.getStringFormat()}, ${destination}.")
 //        try {
@@ -254,6 +177,170 @@ class LocationRepository private constructor(context: Context){
 //            Timber.e(e)
 //        }
 //    }
+
+    // The counting reset with get direction success
+    var route_count = 0
+    var leg_count = 0
+    var step_count = 0
+    var stopLocation: JSONLatLng? = null
+    fun getStop(route_count: Int, leg_count: Int, step_count: Int): LatLng? {
+        /**
+         * Get next step in legs in Routes in direction
+         */
+        var end_location: JSONLatLng? = null
+        if (_direction.value != null) {
+            end_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.end_location
+            }
+        return end_location?.let { LatLng(it.lat!!, it.lng!!) }
+        }
+
+    fun resetCounting() {
+        /**
+         * Reset every counting to start
+         */
+        route_count = 0
+        leg_count = 0
+        step_count = 0
+    }
+
+    fun getRouteLegStepSize(route_count: Int, leg_count: Int): IntArray {
+        val route = _direction.value!!.routes
+        val route_size = route?.size
+        val leg = route?.get(route_count)?.legs
+        val leg_size = leg?.size
+        val step = leg?.get(leg_count)?.steps
+        val step_size = step?.size
+        if (step_size != null && leg_size != null && route_size != null) {
+            return intArrayOf(route_size, leg_size, step_size)
+        }
+        return intArrayOf(-1, -1, -1)
+    }
+
+    fun incrementCounting(route_count: Int, leg_count: Int, step_count: Int): IntArray {
+        val sizes = getRouteLegStepSize(route_count, leg_count)
+        val result = intArrayOf(route_count, leg_count, step_count)
+        result[2] += 1
+        if (sizes[2] >= 0 && result[2] >= sizes[2]) {
+            result[2] = 0
+            result[1] += 1
+            if (sizes[1] >= 0 && result[1] >= sizes[1]) {
+                result[1] = 0
+                result[0] += 1
+                if (sizes[0] >= 0 && result[0] >= sizes[0]) {
+                    result[0] = 0
+                }
+            }
+        }
+        return result
+    }
+
+    fun decrementCounting(route_count: Int, leg_count: Int, step_count: Int): IntArray {
+        val sizes = getRouteLegStepSize(route_count, leg_count)
+        val result = intArrayOf(route_count, leg_count, step_count)
+        if (sizes[0] >= 0 && sizes[1] >= 0 && sizes[2] >= 0) {
+            result[2] -= 1
+            if (result[2] < 0) {
+                result[1] -= 1
+                if (result[1] < 0) {
+                    result[0] -= 1
+                    if (result[0] < 0) {
+                        result[0] = sizes[0]-1
+                    }
+                    val leg = _direction.value!!.routes?.get(result[0])?.legs
+                    val leg_size = leg?.size
+                    if (leg_size != null) {
+                        result[1] = leg_size-1
+                    }
+                }
+                val step = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps
+                val step_size = step?.size
+                if (step_size != null) {
+                    result[2] = step_size-1
+                }
+            }
+            return result
+        }
+        return sizes
+    }
+
+    fun distanceTo(destination: LatLng): Float {
+        val current = LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude)
+        val result = FloatArray(3)
+        Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, destination.latitude, destination.longitude, result)
+        return result[0]
+    }
+
+    val minimumDistance = 1000.0f
+    fun getNextPosition(): LatLng? {
+        /**
+         * Determine next position
+         *
+         * Input:
+         *  - Current location: LatLng
+         *  - Last Position: LatLng
+         *  - Next Position: LatLng
+         *  - epsilon: Float = minimum value that have to request new direction
+         * Output:
+         *  - LatLng of the position that have to nanivate to
+         *
+         *  Algorithm
+         *   a = distance from current_location to heading_stop
+         *   b = distance from current_location to current_stop
+         *   c = distance from last_stop to heading_stop
+         *
+         *   if a < c and b < c then
+         *      next_position = heading_position
+         *   else if a > c and b < epsilon then
+         *      next_position = last_position
+         *      current_count = prev_count
+         *   else if b > c and a < epsilon then
+         *      next_position = next_position
+         *      current_count = heading_count
+         *   else if a > c and b > epsilon or b > c and a > epsilon then
+         *      request new direction
+         */
+        val currentStop = getStop(route_count, leg_count, step_count)
+        val nextCount = incrementCounting(route_count, leg_count, step_count)
+        val nextStop = getStop(nextCount[0], nextCount[1], nextCount[2])
+        if (currentStop != null && nextStop != null) {
+            val distanceCurrent = distanceTo(currentStop)
+            val distanceNext = distanceTo(nextStop)
+            val temp = FloatArray(1)
+            Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
+            val distanceBetween = temp[0]
+            if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
+                return nextStop
+            } else if (distanceNext > distanceBetween && distanceCurrent < minimumDistance) {
+                val prevCount = decrementCounting(route_count, leg_count, step_count)
+                route_count = prevCount[0]
+                leg_count = prevCount[1]
+                step_count = prevCount[2]
+                return currentStop
+            } else if (distanceCurrent > distanceBetween && distanceNext < minimumDistance) {
+                val newCount = incrementCounting(nextCount[0], nextCount[1], nextCount[2])
+                route_count = nextCount[0]
+                leg_count = nextCount[1]
+                step_count = nextCount[2]
+                return getStop(newCount[0], newCount[1], newCount[2])
+            } else if ((distanceNext > distanceBetween && distanceCurrent > minimumDistance) || (distanceCurrent > distanceBetween && distanceNext > minimumDistance)) {
+                Log.i("Location", "Out of range please find new direction")
+                // TODO: find new direction
+                resetCounting()
+                return null
+            }
+        }
+        return null
+    }
+
+    fun getBearingToNextPosition(): Float {
+        val result = FloatArray(3)
+        getNextPosition()?.let {
+            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
+                it.latitude, it.longitude, result)
+        }
+
+        return result[1]
+    }
 
     fun BearingToDegree(bearing: Float): Float {
         /**
