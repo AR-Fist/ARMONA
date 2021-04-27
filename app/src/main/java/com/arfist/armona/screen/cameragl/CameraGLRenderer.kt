@@ -19,19 +19,30 @@ private fun toBuffer(fa: FloatArray) = ByteBuffer
         position(0)
     }
 
+private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
+    matrix.apply {
+        Matrix.setIdentityM(this, 0) // think in reverse order
+        // last transform
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f); // change arrow position
+        Matrix.rotateM(this, 0, -90f + degree, 0f, 0f, 1f)
+        Matrix.translateM(this, 0, -0.1f, 0f, 0f); // change rotate origin
+        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
+        Matrix.scaleM(this, 0, .4f, .4f, .4f)
+        // first transform
+    }
+}
+
 class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.Renderer {
 
     lateinit var program: CameraGLProgram
 
-    private val background_vertices = floatArrayOf(-0.7f, -0.7f, 1f, -1f, -1f, 1f, 1f, 1f)
+    private val background_vertices = floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)
     private val background_textures = floatArrayOf(0f, 1f, 1f, 1f, 0f, 0f, 1f, 0f)
 
-    val model_matrix = FloatArray(16).apply {
-        Matrix.setIdentityM(this, 0)
-        Matrix.scaleM(this, 0, .5f, .5f, .5f)
-        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f) }
+    val model_matrix = FloatArray(16).apply { calculateModelMatrix(this, 0f) }
+
     val view_matrix = FloatArray(16).apply {
-        Matrix.setLookAtM(this, 0, 2f, 4f, 1.2f, 0f, 0f, 0f, 0f, 0f, 2f); }
+        Matrix.setLookAtM(this, 0, 0f, 2.3f, 1.6f, 0f, 0f, 0f, 0f, 0f, 2f); }
     val projection_matrix = FloatArray(16).apply {
         Matrix.perspectiveM(this, 0, 30f, 1f / 1f, 0f, 10f) }
 
@@ -60,6 +71,8 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
 
     override fun onDrawFrame(unused: GL10?) {
         Timber.i("CameraGLRenderer draw frame")
+        // update model
+        calculateModelMatrix(model_matrix, viewModel.arrowRotation)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glEnable(GL_BLEND)
@@ -93,9 +106,9 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
             }
 
             // DRAW MODEL
-            if (viewModel.model != null) {
+            if (viewModel.arrowModel != null) {
                 glUniform1i(uMode, 3) // mode
-                for (mesh in viewModel.model!!.meshes) {
+                for (mesh in viewModel.arrowModel!!.meshes) {
                     mesh.material.run {
                         glUniform3f(uKa, Ka[0], Ka[1], Ka[2])
                         glUniform3f(uKd, Kd[0], Kd[1], Kd[2])

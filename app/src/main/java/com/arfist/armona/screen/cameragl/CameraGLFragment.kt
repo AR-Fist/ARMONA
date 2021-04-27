@@ -1,7 +1,6 @@
 package com.arfist.armona.screen.cameragl
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.opengl.GLSurfaceView
@@ -16,7 +15,7 @@ import java.util.concurrent.Executors
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import com.arfist.armona.screen.cameragl.REQUEST_CODE_PERMISSIONS as REQUEST_CODE_PERMISSIONS1
@@ -40,13 +39,17 @@ private fun toBitmap(img: ImageProxy): Bitmap {
 private const val REQUEST_CODE_PERMISSIONS = 10
 private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 
+/**
+ * CORE Fragment of AR View
+ * because it is stand alone fragment, it's need to manage camera here in fragment, not in activity;
+ **/
 class CameraGLFragment: Fragment() {
 
     private var cameraExecutor = Executors.newSingleThreadExecutor()
-    private val fragmentContext: FragmentActivity
+    private val parentActivity: FragmentActivity
         get() = this.requireActivity()
 
-    private val viewModel: CameraGLViewModel by viewModels()
+    private lateinit var viewModel: CameraGLViewModel
     private lateinit var renderer: CameraGLRenderer
 
     /**
@@ -60,13 +63,19 @@ class CameraGLFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
+        // GET VIEWMODEL STORE from root activity
+        viewModel = ViewModelProvider(parentActivity).get(CameraGLViewModel::class.java)
+
         // CREATE GL RENDERER
         renderer = CameraGLRenderer(viewModel)
 
         // LOAD ARROW MODEL
-        viewModel.model = ModelLoader(requireActivity().assets, "model").loadOBJ("arrowk2.obj")
+        viewModel.arrowModel = ModelLoader(requireActivity().assets, "model").loadOBJ("arrowk2.obj")
 
-        // REQUEST CAMERA, after success open camera will {@link startCamera}
+        /**
+         * REQUEST CAMERA,
+         * after success open camera will fire event in {@link onRequestPermissionsResult} then callback {@link startCamera}
+         **/
         requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS1)
 
         // USE GL VIEW BIND TO MY GL RENDERER
@@ -78,11 +87,11 @@ class CameraGLFragment: Fragment() {
         }
     }
 
-    /** stream camera bitmap to viewModel */
+    /** Stream Camera Bitmap to viewModel (use camerax analyzer) */
     private fun startCamera() {
         val cameraSelector = CameraSelector
             .Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
         val imageAnalyzer = ImageAnalysis
             .Builder()
@@ -101,27 +110,28 @@ class CameraGLFragment: Fragment() {
                     return@Analyzer
                 })
             }
-        val currentProcessCameraProvider = ProcessCameraProvider.getInstance(fragmentContext)
+        val currentProcessCameraProvider = ProcessCameraProvider.getInstance(parentActivity)
         currentProcessCameraProvider.addListener({
             currentProcessCameraProvider
                 .get()
                 .bindToLifecycle(this, cameraSelector, imageAnalyzer)
                 .also { Timber.i("Attached CameraProvider to Fragment") }
-        }, ContextCompat.getMainExecutor(fragmentContext))
+        }, ContextCompat.getMainExecutor(parentActivity))
 
     }
 
+    /** just boring permission callback */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         val allPermissionsGranted = REQUIRED_PERMISSIONS.all {
-            ContextCompat.checkSelfPermission(fragmentContext, it) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(parentActivity, it) == PackageManager.PERMISSION_GRANTED
         }
         when (requestCode) {
             REQUEST_CODE_PERMISSIONS1 -> when {
                 allPermissionsGranted -> startCamera()
                 else -> {
                     Timber.e("camera permission disable")
-                    Toast.makeText(fragmentContext, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(parentActivity, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
                 }
             }
         }

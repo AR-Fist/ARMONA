@@ -52,9 +52,8 @@ private val fragmentShaderCode = """
     uniform vec3  ks;
     uniform float ns;
     
-    vec3 lightDir = normalize(vec3(3.0, 2.0, -60.0));
+    vec3 lightDir = normalize(vec3(3.0, 6.0, -2.0));
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
-    vec3 objectColor = vec3(0.8, 0.2, 0.6);
     
     void main() {
       if (mode == 1) {
@@ -71,7 +70,7 @@ private val fragmentShaderCode = """
         float diffuseStrength = 1.0;
         vec3 diffuse = diff * kd * lightColor * diffuseStrength;
         
-        vec3 result = (ambient + diffuse) * objectColor;
+        vec3 result = (ambient + diffuse);
         gl_FragColor = vec4(result, 1.0);
       }
     }
@@ -79,8 +78,9 @@ private val fragmentShaderCode = """
 
 
 /**
- * sekeleton ARMONA custom vertex shader and fragment shader
- * but DON'T write any draw workflow here
+ * SHADER PROGRAM WRAPPER (no brainer class)
+ * just compile custom vertex shader and fragment shader
+ * and expose uniform/attribute as variable
  **/
 class CameraGLProgram {
 
@@ -135,6 +135,7 @@ class CameraGLProgram {
         }
     }
 
+    /** Let's expose uniform/attribute */
     // mode switching
     val uMode = uniform("mode")
     // mvp

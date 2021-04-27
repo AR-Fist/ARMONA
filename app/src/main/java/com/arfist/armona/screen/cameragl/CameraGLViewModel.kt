@@ -5,6 +5,6 @@ import androidx.lifecycle.ViewModel
 
 class CameraGLViewModel: ViewModel() {
     var arrowRotation = 0f
-    var model: ModelLoader.MeshGroup? = null
+    var arrowModel: ModelLoader.MeshGroup? = null
     var cameraBitmap: Bitmap? = null
 }
