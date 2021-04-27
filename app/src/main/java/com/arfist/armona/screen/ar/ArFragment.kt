@@ -1,8 +1,10 @@
 package com.arfist.armona.screen.ar
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.util.Log
@@ -27,6 +29,7 @@ import org.opencv.android.Utils
 import org.opencv.imgproc.Imgproc
 import java.util.concurrent.Executors
 import android.os.Build
+import android.util.Rational
 import androidx.annotation.RequiresApi
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
@@ -34,13 +37,15 @@ import org.opencv.core.Point
 import com.arfist.armona.utils.toBitmap
 import android.util.Size
 import android.widget.ImageView
+import kotlin.math.ceil
 
+@SuppressLint("UnsafeExperimentalUsageError")
 class ArFragment : Fragment() {
     private lateinit var viewModel: ArViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
     private var executors = Array(2){ Executors.newSingleThreadExecutor() }
-
+    private var roadDetectionSvc: RoadDetectionService? = null
 
     companion object {
         private const val TAG = "CameraXBasic"
@@ -82,7 +87,7 @@ class ArFragment : Fragment() {
     private fun setupCam(container: ViewGroup) {
         val cameraProvider = ProcessCameraProvider.getInstance(requireContext()).get()
         val roadDetectionUseCase = ImageAnalysis.Builder()
-            .setTargetResolution(Size(240, 320))
+            .setTargetResolution(Size(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
             .build()
             .also {
                 it.setAnalyzer(
@@ -123,15 +128,22 @@ class ArFragment : Fragment() {
         imageproxy.close()
     }
 
+
     @RequiresApi(Build.VERSION_CODES.P)
     private fun detectRoad(imageproxy: ImageProxy, container: ViewGroup){
 
         // get image from image proxy
         val img = imageproxy.image!!.toBitmap()
-        val rgba = Mat()
-        Utils.bitmapToMat(img, rgba)
+        val _rgba = Mat()
+        Utils.bitmapToMat(img, _rgba)
+        val desiredSize = org.opencv.core.Size(ceil(_rgba.width() * 240.0 / _rgba.height()), 240.0)
+        val rgba = Mat(desiredSize, _rgba.type())
+        Imgproc.resize(_rgba, rgba, desiredSize)
+        Timber.i("Processing those image with resolution W=${rgba.width()}, H=${rgba.height()}")
 
-        var resultLines = detectRoadFromBitmap(rgba)
+        if (roadDetectionSvc == null)
+            roadDetectionSvc = RoadDetectionService(20f * desiredSize.height.toFloat() / 480f, 150f * desiredSize.width.toFloat() / 640f)
+        var resultLines = roadDetectionSvc!!.detectRoadFromBitmap(rgba)
 
         // plot left
         var left = resultLines[0]
@@ -150,12 +162,13 @@ class ArFragment : Fragment() {
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
 
+        val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(rgba, newImage)
 //        val resultBitmap = img?.copy(Bitmap.Config.RGB_565, true)
-        Utils.matToBitmap(rgba, img)
 
         requireActivity().runOnUiThread {
             var imgview = container.findViewById<ImageView>(R.id.image_view)
-            imgview.setImageBitmap(img)
+            imgview.setImageBitmap(newImage)
         }
 
         imageproxy.close()

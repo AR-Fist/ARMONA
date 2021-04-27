@@ -223,11 +223,14 @@ class LiveCameraView(val screenRatio: Float) {
 
     private fun fitTextureCoord(targetSize: Size){
         val compoundFactor: Float = targetSize.height.toFloat() / (targetSize.width * screenRatio)
+        Timber.i("compoundFactor: $compoundFactor")
         val textureCoords = floatArrayOf(
-            0f, 0f,
-            (1f + compoundFactor) / 2f, 1f,
-            (1f + compoundFactor) / 2f, 0f,
-            0f, 1f,
+            1f - compoundFactor, 0f,
+//            0f, 0f,
+            1f, 1f,
+            1f, 0f,
+            1f - compoundFactor, 1f,
+//            0f, 1f,
         )
 
         with(textureBuffer){

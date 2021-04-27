@@ -25,7 +25,7 @@ class GLRenderer(screenRatio: Float) : GLSurfaceView.Renderer {
         // Redraw background color
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT or GL10.GL_DEPTH_BUFFER_BIT)
 
-        liveViewProgram.draw()
+//        liveViewProgram.draw()
     }
 
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {

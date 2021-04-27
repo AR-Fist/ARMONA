@@ -15,7 +15,7 @@ import com.arfist.armona.R
 @RequiresApi(Build.VERSION_CODES.P)
 class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView(context, attrs) {
 
-    private lateinit var glRenderer: GLRenderer;
+    private lateinit var glRenderer: GLRenderer
 
     init {
         // Create an OpenGL ES 2.0 context
@@ -24,8 +24,11 @@ class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView
         setZOrderOnTop(true)
         setEGLConfigChooser(8, 8, 8, 8, 16, 0)
         holder.setFormat(PixelFormat.TRANSLUCENT)
+    }
 
-        glRenderer = GLRenderer(resources.displayMetrics.widthPixels.toFloat() / resources.displayMetrics.heightPixels)
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        glRenderer = GLRenderer(width.toFloat() / height)
         setRenderer(glRenderer)
         renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }
