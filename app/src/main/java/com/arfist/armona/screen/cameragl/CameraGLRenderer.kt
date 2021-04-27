@@ -1,7 +1,5 @@
 package com.arfist.armona.screen.cameragl
 
-import android.graphics.Bitmap
-import android.graphics.SurfaceTexture
 import android.opengl.*
 import android.opengl.GLES20.*
 import timber.log.Timber
@@ -47,24 +45,12 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
         external_texture = IntArray(1).let {
             glGenTextures(1, it, 0)
             glBindTexture(GL_TEXTURE_2D, it[0])
-
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-//            glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, it[0])
-//            glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR.toFloat())
-//            glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR.toFloat())
-//            glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-//            glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
             it[0]
         }
-
-        viewModel.surfaceTexture = SurfaceTexture(external_texture)
-        viewModel.surfaceTexture!!.setOnFrameAvailableListener {
-            Timber.i("new surfaceTexture frame is available")
-            onDrawFrame(unused)
-        };
     }
 
     override fun onSurfaceChanged(unused: GL10?, width: Int, height: Int) {
@@ -77,60 +63,58 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glEnable(GL_BLEND)
-//        glEnable(GL_CULL_FACE)
-        glDisable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE)
         glClear(GL_COLOR_BUFFER_BIT)
 
         with(program) {
-            glEnableVertexAttribArray(a_position)
-            glEnableVertexAttribArray(a_normal)
-            glEnableVertexAttribArray(a_texture)
+            glEnableVertexAttribArray(aPosition)
+            glEnableVertexAttribArray(aNormal)
+            glEnableVertexAttribArray(aTexture)
 
-            glUniformMatrix4fv(u_model, 1, false, toBuffer(model_matrix))
-            glUniformMatrix4fv(u_view, 1, false, toBuffer(view_matrix))
-            glUniformMatrix4fv(u_projection, 1, false, toBuffer(projection_matrix))
+            glUniformMatrix4fv(uModel, 1, false, toBuffer(model_matrix))
+            glUniformMatrix4fv(uView, 1, false, toBuffer(view_matrix))
+            glUniformMatrix4fv(uProjection, 1, false, toBuffer(projection_matrix))
 
             // DRAW CAMERA
-            if (viewModel.surfaceTexture != null) {
-                glUniform1i(u_mode, 1)
-
+            if (viewModel.cameraBitmap != null) {
+                glUniform1i(uMode, 1)
 
                 glBindTexture(GL_TEXTURE_2D, external_texture)
                 glActiveTexture(GL_TEXTURE0)
                 viewModel.cameraBitmap?.let {
                     GLUtils.texImage2D(GL_TEXTURE_2D, 0, it, 0)
                 }
-                glUniform1i(u_texture_image, 0)
+                glUniform1i(uTextureImage, 0)
 
-                glVertexAttribPointer(a_texture, 2, GL_FLOAT, false, 0, toBuffer(background_textures))
-                glVertexAttribPointer(a_position, 2, GL_FLOAT, false, 0, toBuffer(background_vertices))
+                glVertexAttribPointer(aTexture, 2, GL_FLOAT, false, 0, toBuffer(background_textures))
+                glVertexAttribPointer(aPosition, 2, GL_FLOAT, false, 0, toBuffer(background_vertices))
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
                 glClear(GL_DEPTH_BUFFER_BIT)
             }
 
             // DRAW MODEL
             if (viewModel.model != null) {
-                glUniform1i(u_mode, 3) // mode
+                glUniform1i(uMode, 3) // mode
                 for (mesh in viewModel.model!!.meshes) {
                     mesh.material.run {
-                        glUniform3f(u_ka, Ka[0], Ka[1], Ka[2])
-                        glUniform3f(u_kd, Kd[0], Kd[1], Kd[2])
-                        glUniform3f(u_ks, Ks[0], Ks[1], Ks[2])
-                        glUniform1f(u_ns, Ns)
+                        glUniform3f(uKa, Ka[0], Ka[1], Ka[2])
+                        glUniform3f(uKd, Kd[0], Kd[1], Kd[2])
+                        glUniform3f(uKs, Ks[0], Ks[1], Ks[2])
+                        glUniform1f(uNs, Ns)
                     }
                     mesh.polygon.run {
-                        glVertexAttribPointer(a_position, 3, GL_FLOAT, false, 0, bufferPosition)
-                        glVertexAttribPointer(a_texture, 2, GL_FLOAT, false, 0, bufferTexture)
-                        glVertexAttribPointer(a_normal, 3, GL_FLOAT, false, 0, bufferNormal)
+                        glVertexAttribPointer(aPosition, 3, GL_FLOAT, false, 0, bufferPosition)
+                        glVertexAttribPointer(aTexture, 2, GL_FLOAT, false, 0, bufferTexture)
+                        glVertexAttribPointer(aNormal, 3, GL_FLOAT, false, 0, bufferNormal)
                         glDrawArrays(GL_TRIANGLES, 0, this.numFaces())
                     }
 
                 }
             }
 
-            glDisableVertexAttribArray(program.a_position)
-            glDisableVertexAttribArray(program.a_normal)
-            glDisableVertexAttribArray(program.a_texture)
+            glDisableVertexAttribArray(program.aPosition)
+            glDisableVertexAttribArray(program.aNormal)
+            glDisableVertexAttribArray(program.aTexture)
         }
     }
 }

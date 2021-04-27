@@ -22,9 +22,10 @@ class CameraGLActivity: AppCompatActivity() {
 
         setContentView(R.layout.activity_cameragl)
 
+        // CREATE CameraGLFragment
         val cameraglFragment = CameraGLFragment()
 
-        // allow dynamic swap fragment but now have only CameraGLFragment
+        // Dynamic Fragment, but use CameraGLFragment
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.cameragl_fragment_container, cameraglFragment)
             commit()

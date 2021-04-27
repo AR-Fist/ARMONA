@@ -1,6 +1,5 @@
 package com.arfist.armona.screen.cameragl
 
-import android.annotation.SuppressLint
 import android.opengl.GLES20.*
 import android.opengl.GLException
 import timber.log.Timber
@@ -78,7 +77,11 @@ private val fragmentShaderCode = """
     }
 """.trimIndent()
 
-@SuppressLint("Assert")
+
+/**
+ * sekeleton ARMONA custom vertex shader and fragment shader
+ * but DON'T write any draw workflow here
+ **/
 class CameraGLProgram {
 
     private var program by Delegates.notNull<Int>()
@@ -123,31 +126,33 @@ class CameraGLProgram {
         glValidateProgram(program)
         glGetProgramiv(program, GL_VALIDATE_STATUS, result, 0)
         if (result[0] == GL_FALSE) {
-            val message = if (!glIsProgram(program)) "Program handle deprecated!" else "Program do not validated!"
+            val message =
+                if (!glIsProgram(program)) "Program handle deprecated!" else "Program do not validated!"
             throw GLException(result[0], message)
         }
-        assert(glIsProgram(program)) { "program is not gl program" }
-
+        if (!glIsProgram(program)) {
+            throw GLException(GL_FALSE, "program is not gl program")
+        }
     }
 
     // mode switching
-    val u_mode = uniform("mode")
+    val uMode = uniform("mode")
     // mvp
-    val u_model = uniform("model")
-    val u_view = uniform("view")
-    val u_projection = uniform("projection")
+    val uModel = uniform("model")
+    val uView = uniform("view")
+    val uProjection = uniform("projection")
     // obj
-    val a_position = attrib("position")
-    val a_normal = attrib("normal")
-    val a_texture = attrib("texture")
-    val u_texture_image = uniform("texture_image")
+    val aPosition = attrib("position")
+    val aNormal = attrib("normal")
+    val aTexture = attrib("texture")
+    val uTextureImage = uniform("texture_image")
     // mtl
-    val u_ka = uniform("ka")
-    val u_kd = uniform("kd")
-    val u_ks = uniform("ks")
-    val u_ns = uniform("ns")
+    val uKa = uniform("ka")
+    val uKd = uniform("kd")
+    val uKs = uniform("ks")
+    val uNs = uniform("ns")
 
     fun useProgram() = glUseProgram(program)
-    fun uniform(name: String) = glGetUniformLocation(program, name)
-    fun attrib(name: String) = glGetAttribLocation(program, name)
+    private fun uniform(name: String) = glGetUniformLocation(program, name)
+    private fun attrib(name: String) = glGetAttribLocation(program, name)
 }
