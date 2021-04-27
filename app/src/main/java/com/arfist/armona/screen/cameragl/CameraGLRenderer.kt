@@ -23,9 +23,9 @@ private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
         // last transform
-        Matrix.translateM(this, 0, 0f, 0.6f, 0f); // change arrow position
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f) // change arrow position
         Matrix.rotateM(this, 0, -90f + degree, 0f, 0f, 1f)
-        Matrix.translateM(this, 0, -0.1f, 0f, 0f); // change rotate origin
+        Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
         Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
         Matrix.scaleM(this, 0, .4f, .4f, .4f)
         // first transform
@@ -44,7 +44,7 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
     val view_matrix = FloatArray(16).apply {
         Matrix.setLookAtM(this, 0, 0f, 2.3f, 1.6f, 0f, 0f, 0f, 0f, 0f, 2f); }
     val projection_matrix = FloatArray(16).apply {
-        Matrix.perspectiveM(this, 0, 30f, 1f / 1f, 0f, 10f) }
+        Matrix.perspectiveM(this, 0, viewModel.arrowFovy, 1f / 1f, 0f, 10f) }
 
     private var external_texture by Delegates.notNull<Int>()
 
@@ -66,7 +66,7 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
 
     override fun onSurfaceChanged(unused: GL10?, width: Int, height: Int) {
         glViewport(0, 0, width, height)
-        Matrix.perspectiveM(projection_matrix, 0, 30f, width.toFloat() / height, 0f, 10f)
+        Matrix.perspectiveM(projection_matrix, 0, viewModel.arrowFovy, width.toFloat() / height, 0f, 10f)
     }
 
     override fun onDrawFrame(unused: GL10?) {

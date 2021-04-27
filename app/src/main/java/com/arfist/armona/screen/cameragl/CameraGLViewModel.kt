@@ -6,5 +6,6 @@ import androidx.lifecycle.ViewModel
 class CameraGLViewModel: ViewModel() {
     var arrowRotation = 0f
     var arrowModel: ModelLoader.MeshGroup? = null
+    var arrowFovy = 100f
     var cameraBitmap: Bitmap? = null
 }

@@ -70,7 +70,7 @@ class CameraGLFragment: Fragment() {
         renderer = CameraGLRenderer(viewModel)
 
         // LOAD ARROW MODEL
-        viewModel.arrowModel = ModelLoader(requireActivity().assets, "model").loadOBJ("arrowk2.obj")
+        viewModel.arrowModel = ModelLoader(parentActivity.assets, "model").loadOBJ("arrowk2.obj")
 
         /**
          * REQUEST CAMERA,
