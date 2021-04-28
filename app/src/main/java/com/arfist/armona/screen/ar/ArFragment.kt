@@ -161,6 +161,18 @@ class ArFragment : Fragment() {
         //Drawing lines on an image
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
+        var glview = container.findViewById<GLView>(R.id.gl_view)
+        glview.updateRoadLine(
+                resultLines.fold(ArrayList<android.graphics.Point>())
+                {
+                    arr, side ->
+                    arrayOf(1, 0).fold(arr)
+                    { a, i ->
+                        a.add(android.graphics.Point(side[i * 2 + 1], side[i * 2])); a
+                    }
+                }.toTypedArray(),
+            android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
+        )
 
         val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(rgba, newImage)

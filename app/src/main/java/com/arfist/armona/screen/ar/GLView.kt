@@ -33,10 +33,22 @@ class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView
         renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }
 
-    public fun streamCameraView(bitmap: Bitmap) {
+    fun streamCameraView(bitmap: Bitmap) {
         queueEvent(
             Runnable{
                 glRenderer.updateCameraViewBitmap(bitmap)
+                requestRender()
+            }
+        )
+    }
+
+    fun updateRoadLine(vertices: Array<android.graphics.Point>, frame: android.graphics.Point){
+        Timber.i("updateRoadLine: $vertices, $frame")
+        queueEvent(
+            Runnable{
+                val middleX = frame.x / 2.0
+                val middleY = frame.y / 2.0
+                glRenderer.updateRoadLine(vertices.map { v -> org.opencv.core.Point( (middleX - v.x) / middleX, (middleY - v.y) / middleY) }.toTypedArray())
                 requestRender()
             }
         )

@@ -40,7 +40,7 @@ class LiveCameraView(val screenRatio: Float) {
             varying vec2 v_TexCoord;
             
             void main() {
-                gl_FragColor = texture2D(u_Texture, v_TexCoord);
+                gl_FragColor = vec4(texture2D(u_Texture, v_TexCoord).rgb, 0.75);
             }
         """
 
@@ -104,20 +104,19 @@ class LiveCameraView(val screenRatio: Float) {
     }
 
     private  val vertexAndElementBuffer = IntBuffer.allocate(
-            // Index
-            // Vertex
-            // Texture
-            3
-            ).also {
-        GLES20.glGenBuffers(3, it);
-    }
+        // Index
+        // Vertex
+        // Texture
+        3
+    )
 
     private val texture = IntBuffer.allocate(1)
 
     private val vertexStride: Int = COORDS_PER_VERTEX * 4 // 4 bytes per vertex
     private val textureStride: Int = vertexStride // 4 bytes per vertex
 
-    private var mProgram: Int
+    private val mProgram: Int
+    private val vPositionGLLocation: Int
 
     private fun loadShader(type: Int, shaderCode: String): Int {
 
@@ -161,22 +160,25 @@ class LiveCameraView(val screenRatio: Float) {
         if (linkStatus[0] != GLES20.GL_TRUE)
             throw RuntimeException("Could not link program: ${GLES20.glGetProgramInfoLog(mProgram)}")
 
+        Timber.i("Created LiveCamView program with ID = $mProgram")
         GLES20.glUseProgram(mProgram)
+        GLES20.glGenBuffers(3, vertexAndElementBuffer);
+        Timber.i("Created LiveCamView's buffer = {${vertexAndElementBuffer[0]}, ${vertexAndElementBuffer[1]}, ${vertexAndElementBuffer[2]}}")
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vertexAndElementBuffer[0]);
         GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer.capacity() * 2, indicesBuffer, GLES20.GL_STATIC_DRAW)
 
-        GLES20.glGetAttribLocation(mProgram, "vPosition").run {
+        vPositionGLLocation = GLES20.glGetAttribLocation(mProgram, "vPosition").also {
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[1]);
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexBuffer.capacity() * 4, vertexBuffer, GLES20.GL_STATIC_DRAW)
 
             // Enable a handle to the triangle vertices
-            GLES20.glEnableVertexAttribArray(this)
+            GLES20.glEnableVertexAttribArray(it)
 
             // Prepare the triangle coordinate data
             GLES20.glVertexAttribPointer(
-                this,
+                it,
                 COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT,
                 false,
@@ -267,6 +269,15 @@ class LiveCameraView(val screenRatio: Float) {
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vertexAndElementBuffer[0]);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[1]);
+
+        GLES20.glVertexAttribPointer(
+            vPositionGLLocation,
+            COORDS_PER_VERTEX,
+            GLES20.GL_FLOAT,
+            false,
+            vertexStride,
+            0
+        )
 
         // Draw the triangle
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices.size, GLES20.GL_UNSIGNED_SHORT, 0)

@@ -25,9 +25,10 @@
             android:id="@+id/image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#FF0000"
             android:contentDescription="Imageview"
-            android:visibility="visible"
             android:rotation="90"
+            android:visibility="visible"
             tools:ignore="MissingConstraints" />
 
 
