@@ -29,9 +29,11 @@ import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.min
 
 const val LowestMetres: Double = 5.0
-// This will be ref from while-in-use-location, LocationUpdateForeground, LocationUpdateBackGround
+
+// This ref from while-in-use-location, LocationUpdateForeground, LocationUpdateBackGround
 class LocationRepository private constructor(context: Context){
 
     // These object only created once at the runtime
@@ -65,8 +67,13 @@ class LocationRepository private constructor(context: Context){
 
     // Location requester
     private val locationRequest = LocationRequest().apply {
-        interval = TimeUnit.SECONDS.toMillis(1)
-        fastestInterval = TimeUnit.SECONDS.toMillis(1)
+//        interval = TimeUnit.SECONDS.toMillis(1)
+//        fastestInterval = TimeUnit.SECONDS.toMillis(1)
+//        maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+//        interval = TimeUnit.MILLISECONDS.toMillis(300)
+//        fastestInterval = TimeUnit.MILLISECONDS.toMillis(100)
+        interval = 0
+        fastestInterval = 0
         maxWaitTime = TimeUnit.MINUTES.toMillis(2)
         priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
@@ -187,6 +194,14 @@ class LocationRepository private constructor(context: Context){
         /**
          * Get next step in legs in Routes in direction
          */
+
+        if (step_count == -1) {
+            var start_location: JSONLatLng? = null
+            if (_direction.value != null) {
+                start_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count+1)?.start_location
+            }
+            return start_location?.let { LatLng(it.lat!!, it.lng!!) }
+        }
         var end_location: JSONLatLng? = null
         if (_direction.value != null) {
             end_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.end_location
@@ -200,6 +215,7 @@ class LocationRepository private constructor(context: Context){
          */
         route_count = 0
         leg_count = 0
+//        step_count = -1
         step_count = 0
     }
 
@@ -237,8 +253,12 @@ class LocationRepository private constructor(context: Context){
     fun decrementCounting(route_count: Int, leg_count: Int, step_count: Int): IntArray {
         val sizes = getRouteLegStepSize(route_count, leg_count)
         val result = intArrayOf(route_count, leg_count, step_count)
-        if (sizes[0] >= 0 && sizes[1] >= 0 && sizes[2] >= 0) {
+        if (sizes[0] > 0 && sizes[1] > 0 && sizes[2] > 0) {
             result[2] -= 1
+            if (result[0] == 0 && result[1] == 0 && result[2] == -1) {
+                // start case
+                return result
+            }
             if (result[2] < 0) {
                 result[1] -= 1
                 if (result[1] < 0) {
@@ -270,7 +290,7 @@ class LocationRepository private constructor(context: Context){
         return result[0]
     }
 
-    val minimumDistance = 1000.0f
+    var minimumDistance = 300.0f
     fun getNextPosition(): LatLng? {
         /**
          * Determine next position
@@ -323,7 +343,6 @@ class LocationRepository private constructor(context: Context){
                 step_count = nextCount[2]
                 return getStop(newCount[0], newCount[1], newCount[2])
             } else if ((distanceNext > distanceBetween && distanceCurrent > minimumDistance) || (distanceCurrent > distanceBetween && distanceNext > minimumDistance)) {
-                Log.i("Location", "Out of range please find new direction")
                 // TODO: find new direction
                 resetCounting()
                 return null
@@ -400,6 +419,7 @@ class LocationRepository private constructor(context: Context){
         }
     }
 
+    // Test purpose
     val arrowLength = 50.0
     fun calculateOffsetDirectionLocation(): LatLng {
         return SphericalUtil.computeOffset(LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude), arrowLength, getBearingToNextPosition().toDouble())

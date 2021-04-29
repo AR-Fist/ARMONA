@@ -28,18 +28,22 @@ import timber.log.Timber
 
 class ArFragment : Fragment() {
 
+    // Instant
     private lateinit var viewModel: ArViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
 
+    // Sensor
     private lateinit var sensorManager: SensorManager
 
+    // Plot
     private val graphs = ArrayList<GraphView>()
     private val series = ArrayList<LineGraphSeries<DataPoint>>()
 
     private val graphSize = 5
     private val dataSize = 3
     private val seriesSize = graphSize*dataSize
+    //
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,18 +64,19 @@ class ArFragment : Fragment() {
         viewModel.registerSensors()
 
         binding.arViewModel = viewModel
-        observeSensors()
-
-        initGraphSeries()
-        configGraph()
-        configSeries()
 
         binding.buttonArMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
+
+        // Plot
+        observeSensors()
+        initGraphSeries()
+        configGraph()
+        configSeries()
+        //
     }
 
-    @SuppressLint("LogNotTimber")
     private fun observeSensors() {
 
         binding.arViewModel!!.mGoogleOrientation.observe(viewLifecycleOwner, {
@@ -97,8 +102,10 @@ class ArFragment : Fragment() {
         })
     }
 
+    // Continuous call to calculate orientation
     private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
 
+    // Plot
     private fun ArrayList<LineGraphSeries<DataPoint>>.appendData(timestamp: Double, values: FloatArray, count: Int) {
         val startIndex = count*3
         for (i in 0 until dataSize) {
@@ -155,6 +162,8 @@ class ArFragment : Fragment() {
         viewPort.setMinY(-5.0)
         viewPort.setMaxY(5.0)
     }
+    //
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Timber.i("onActivityCreated")
         super.onActivityCreated(savedInstanceState)

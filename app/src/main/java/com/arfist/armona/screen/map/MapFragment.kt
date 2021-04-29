@@ -34,20 +34,17 @@ import kotlin.math.PI
 
 class MapFragment : Fragment() {
 
+    // Init
     private lateinit var binding: MapFragmentBinding
-
     private lateinit var googleMap: GoogleMap
-
     private val mapViewModel: MapViewModel by activityViewModels()
+    private var isPermissionGranted = false
+    private var direction: Direction? = null
+    private var followLocation = false
 
     // Temp
     private val arViewModel: ArViewModel by activityViewModels()
     //
-    private var isPermissionGranted = false
-
-    private var direction: Direction? = null
-
-    private var followLocation = false
 
     companion object {
         private const val DEFAULT_ZOOM = 15
@@ -73,6 +70,7 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
+    // Test
     private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -120,7 +118,6 @@ class MapFragment : Fragment() {
                         DEFAULT_ZOOM.toFloat()
                     ))
             }
-            Log.i("CurrentLocation", "${location}}")
         })
 
         mapViewModel.permissionGranted.observe(viewLifecycleOwner, {
@@ -234,8 +231,11 @@ class MapFragment : Fragment() {
             )
         }
 
+        // Test purpose
         testPointing()
     }
+
+    // Test purpose
     lateinit var polylineBlack: Polyline
     lateinit var polylineGray: Polyline
     lateinit var polylineRed: Polyline
@@ -313,7 +313,7 @@ class MapFragment : Fragment() {
         val degree = arViewModel.testAngle.value!![0].RadToDeg()
         polylinePurple.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(degree.toDouble()))
     }
-
+    //
     override fun onStart() {
         Timber.i("onStart")
         super.onStart()

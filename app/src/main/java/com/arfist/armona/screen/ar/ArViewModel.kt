@@ -39,10 +39,12 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 //    val uncalibMagnetometer = sensorsRepository.uncalibratedMagnetometer
 
     // Filters
-    private val complementaryFilter = ComplementaryFilter(0.98F)
-    private val complementaryFilterGravity = ComplementaryFilter(0.98F)
+    private val complementaryFilter = ComplementaryFilterRotation(0.98F)
+    private val complementaryFilterGravity = ComplementaryFilterRotation(0.98F)
 //    private val kalmanFilter1D = KalmanFilter1D()
     private val extendedKalmanFilter = ExtendedKalmanFilter()
+
+    // Constant
     private var lastTimestamp: Long = 0
     private var dt: Float = 0.0F
     private val nanosec2sec: Float = 1/1000000000F
@@ -63,15 +65,23 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val myOrientationAngle: LiveData<FloatArray>
         get() = _myOrientationAngle
 
-    // Arrow rotation
+    // Arrow rotation (The output that we need)
     private val _arrowRotation = MutableLiveData<FloatArray>()
     val arrowRotation: LiveData<FloatArray>
         get() = _arrowRotation
+
+    private val _arrowRotationSlerp = MutableLiveData<FloatArray>()
+    val arrowRotationSlerp: LiveData<FloatArray>
+        get() = _arrowRotationSlerp
 
     // Test purpose
     private val _testAngle = MutableLiveData<FloatArray>()
     val testAngle: LiveData<FloatArray>
         get() = _testAngle
+
+    private val _testSlerp = MutableLiveData<FloatArray>()
+    val testSlerp: LiveData<FloatArray>
+        get() = _testSlerp
 
     fun registerSensors() = sensorsRepository.registerSensors()
 
@@ -79,8 +89,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
     lateinit var myRotationMatrix: Matrix<Double>
     var myRotationVector = Quaternion(1.0f, 0f, 0f, 0f)
-    // Log all orientation related
-    @SuppressLint("LogNotTimber")
+
+    // Calculate every solution for rotation
     fun getOrientation(timestamp: Long) {
         dt = (timestamp - lastTimestamp)*nanosec2sec
         lastTimestamp = timestamp
@@ -126,10 +136,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
 
-            Log.i("ExtendedKalman", "${xHat[0]}, ${xHat[1]}, ${xHat[2]}. ${xHat[3]}")
-            Log.i("RotationVector", "${rotationVector.value!!.values[3]}, ${rotationVector.value!!.values[0]}, ${rotationVector.value!!.values[1]}, ${rotationVector.value!!.values[2]}")
-            Log.i("MyRotationVector", "${myRotationVector.w}")
-
             calculateArrowRotation()
         } catch (e: Exception) {
             Timber.e(e)
@@ -166,16 +172,16 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         return angles
     }
 
+    var arrowRotationLocal = Quaternion(1f, 0f, 0f, 0f)
     fun calculateArrowRotation() {
         /**
          * This method will be call every sensor update loop ie gyroscope, magnetometer,
-         * accelerometer and GPS only in arviewmodel not in map viewmodel as mapviewmodel
-         * not need this data
+         * accelerometer and GPS only in arviewmodel not in mapviewmodel as it not need this data
          *
          * For the arrow rotation
          * 1. the vector is heading north in the world frame(y axis)
          * 2. the vector will rotate around z axis as bearing degree
-         * 3. apply the rotation of phone in order to change from world fram to local frame
+         * 3. apply the rotation of phone in order to change from world frame to local frame
          *
          * The (2) will calculated by location lat lng
          * The (3) will calculated by sensors with some filter
@@ -185,10 +191,12 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
         val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
 
-        val arrowRotationLocal = arrowRotationWorld*myRotationVector
-        _arrowRotation.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
-
-        val test = arrowRotationLocal*myRotationVector.Inverse()
+        val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
+        arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.01f)
+        _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+        
+        val test = arrowRotationLocal*myRotationVector.inverse()
         _testAngle.value = test.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }

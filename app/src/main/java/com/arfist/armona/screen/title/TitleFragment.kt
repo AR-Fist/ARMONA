@@ -27,10 +27,6 @@ import timber.log.Timber
 
 class TitleFragment : Fragment() {
 
-//    companion object {
-//        fun newInstance() = TitleFragment()
-//    }
-
     private lateinit var viewModel: TitleViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: TitleFragmentBinding

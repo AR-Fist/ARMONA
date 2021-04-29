@@ -73,20 +73,27 @@ class KalmanFilter1D(private val R: Float,
 }
 
 // Rotation filters
-class ComplementaryFilter(val alpha: Float) {
+class ComplementaryFilterRotation(val alpha: Float) {
+    /**
+     * Complementary filter: Weighted sum
+     * this class stand for only rotation which will combine rotation calculated by accelerometer and magnetometer with rotation changing from gyroscope
+     */
     var rotationQuaternion = Quaternion(1F, 0F, 0F, 0F)
     private val epsilon: Float = 1.0E-9F
     private val timeConstant = 0.5f
 
     fun filter(gyroscopeData: FloatArray, accelerometerMagnetometerRotation: Quaternion, deltaTime: Float ) {
+//        the alpha value should change along with time different but I don't really know timeConstant value(It should be avg update time)
 //        val alpha =  timeConstant / (timeConstant+dt)
-//        val rotationVectorGyroscope = getGyroscopeRotation(gyroscopeData, deltaTime)*rotationQuaternion
         val rotationVectorGyroscope = rotationQuaternion * getGyroscopeRotation(gyroscopeData, deltaTime)
-//        rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) * (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
         rotationQuaternion = (((accelerometerMagnetometerRotation * (alpha).toFloat())) + (rotationVectorGyroscope * (1-alpha).toFloat())).getNormalize()
     }
 
     private fun getGyroscopeRotation(gyroscopeData: FloatArray, deltaTime: Float): Quaternion {
+        /**
+         * Increment rotation with gyroscope
+         */
+
         val magnitude =sqrt(gyroscopeData[0] * gyroscopeData[0] + gyroscopeData[1] * gyroscopeData[1] + gyroscopeData[2] * gyroscopeData[2])
         if(magnitude > epsilon) {
             gyroscopeData[0] /= magnitude
@@ -110,6 +117,8 @@ class ExtendedKalmanFilter() {
      * xHat = this state, initial state consist of quaternion and the bias from gyrometer
      * xHatBar = next state predicted
      * xHatPrev = this state but it is previous state on update perspective
+     *
+     * A, B, C, Q and R is the same idea with 1D
      */
     var xHat = create(doubleArrayOf(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)).transpose() // (7, 1) quat(4) + measure(3)
     var xHatBar = zeros(7, 1) // (7, 1)
@@ -124,20 +133,20 @@ class ExtendedKalmanFilter() {
     var Q = eye(7)*0.001 // (7, 7)
     var R = eye(6)*0.1 // (6, 6)
     var K = zeros(7, 6) // (7, 6)
-    val magReference = mat[0, -1, 0].transpose() // (3, 1)
+    val magReference = mat[0, 1, 0].transpose() // (3, 1)
     val accelReference = mat[0, 0, -1].transpose() // (3, 1)
 
     fun predict(angular: DoubleArray, deltaTime: Float) {
-        val deltaTime = deltaTime.toDouble()
+        val deltaTimeFloat = deltaTime.toDouble()
         Sq = mat[-xHat[1], -xHat[2], -xHat[3] end
                 xHat[0], -xHat[3], xHat[2] end
                 xHat[3], xHat[0], -xHat[1] end
                 -xHat[2], xHat[1], xHat[0]]
         A = eye(7)
-        A[0..3, 4..6] = (Sq*(-deltaTime /2))
+        A[0..3, 4..6] = (Sq*(-deltaTimeFloat /2))
 
         B = zeros(7,3)
-        B[0..3, 0..2] = (Sq*(deltaTime /2))
+        B[0..3, 0..2] = (Sq*(deltaTimeFloat /2))
 
         // State extrapolation
         xHatBar = A*xHat + B*create(angular).transpose()
@@ -259,4 +268,7 @@ class MadKalmanFilter(
 
 class OrientationKalmanFilter() {
 
+    /**
+     * This class is for GPS accumulation in order to get dabest realtime position
+     */
 }

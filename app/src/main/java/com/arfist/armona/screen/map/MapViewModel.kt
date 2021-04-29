@@ -24,12 +24,15 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     private var _permissionGranted = MutableLiveData<Boolean>()
     val permissionGranted: LiveData<Boolean> get() = _permissionGranted
 
-//    private var _direction = MutableLiveData<Direction>()
-//    val direction: LiveData<Direction> get() = _direction
     val direction = locationRepository.direction
 
     private var _followLocation = MutableLiveData<Boolean>(false)
     val followLocation: LiveData<Boolean> get() = _followLocation
+
+    // Test param
+    fun onMinumumDistanceChange(text: String) {
+        locationRepository.minimumDistance = text.toFloat()
+    }
 
     fun onPermissionGranted() {
         Timber.i("onPermissionGranted")
@@ -48,10 +51,6 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
         Timber.i("Get direction: ${lastLocation.value?.getStringFormat()}, ${destination}.")
         viewModelScope.launch {
             try {
-//                _direction.value = lastLocation.value?.let {
-//                    locationRepository.getDirection(
-//                        it.getStringFormat(), destination)
-//                }
                 lastLocation.value?.let {
                     locationRepository.getDirection(
                         it.getStringFormat(), destination)
@@ -67,6 +66,5 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()
     fun getOffsetBearing(bearing: Double) = locationRepository.calculateOffsetBearing(bearing)
     fun getOffsetDegree(degree: Double) = locationRepository.calculateOffsetDegree(degree)
-//    fun getDirection(destination: String) = locationRepository.getDirection(destination)
 
 }

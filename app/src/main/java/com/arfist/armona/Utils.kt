@@ -3,6 +3,7 @@ package com.arfist.armona
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import koma.extensions.get
 import koma.matrix.Matrix
@@ -94,7 +95,8 @@ class Quaternion(
     }
 
     fun getNormalize(): Quaternion {
-        val magnitude: Float = this.w*this.w + this.x*this.x + this.y*this.y + this.z*this.z
+//        val magnitude: Float = this.w*this.w + this.x*this.x + this.y*this.y + this.z*this.z
+        val magnitude = length()
         return Quaternion(
             this.w/magnitude,
             this.x/magnitude,
@@ -102,6 +104,45 @@ class Quaternion(
             this.z/magnitude
         )
     }
+
+    fun inverse(): Quaternion {
+        return Quaternion(
+            this.w,
+            -this.x,
+            -this.y,
+            -this.z
+        )
+    }
+
+    fun dot(other: Quaternion): Float {
+        return this.w*other.w + this.x*other.x + this.y*other.y + this.z*other.z
+    }
+
+    fun lengthSquare() = dot(this)
+
+    fun length() = sqrt(lengthSquare())
+
+    fun slerp(other: Quaternion, t: Float): Quaternion {
+        val magnitude = sqrt(lengthSquare() * other.lengthSquare())
+        if (magnitude <= 0f) {
+            return this
+        }
+
+        val product = abs(dot(other) / magnitude)
+
+        return if (product < (1f - EPSILON)) {
+            // Take care of long angle case see http://en.wikipedia.org/wiki/Slerp
+            val theta = acos(product)
+            val d = sin(theta)
+
+            val sign = if (product < 0) -1f else 1f
+            val s0 = sin((1f - t) * theta) / d
+            val s1 = sin(sign * t * theta) / d
+            Log.i("Slerp", "Hello")
+            this*s0 + other*s1
+        } else this
+    }
+
     companion object {
         fun FromRotationMatrix(rotationMatrix: Matrix<Double>): Quaternion {
             // From wiki
@@ -320,16 +361,5 @@ class Quaternion(
         }
         return  floatArrayOf(yaw, pitch, roll)
 //        return floatArrayOf(yaw, roll, pitch)
-    }
-
-
-
-    fun Inverse(): Quaternion {
-        return Quaternion(
-            this.w,
-            -this.x,
-            -this.y,
-            -this.z
-        )
     }
 }
