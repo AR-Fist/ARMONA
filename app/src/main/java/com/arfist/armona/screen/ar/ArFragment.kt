@@ -33,7 +33,7 @@ class ArFragment : Fragment() {
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
 
-    // Sensor
+    // Sensor: Axis convention https://developer.android.com/reference/android/hardware/SensorEvent#values
     private lateinit var sensorManager: SensorManager
 
     // Plot

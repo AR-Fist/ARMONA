@@ -138,7 +138,6 @@ class Quaternion(
             val sign = if (product < 0) -1f else 1f
             val s0 = sin((1f - t) * theta) / d
             val s1 = sin(sign * t * theta) / d
-            Log.i("Slerp", "Hello")
             this*s0 + other*s1
         } else this
     }

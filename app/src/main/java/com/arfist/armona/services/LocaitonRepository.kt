@@ -1,8 +1,10 @@
 package com.arfist.armona.services
 
 import android.content.Context
+import android.icu.util.Output
 import android.location.Location
 import android.os.Looper
+import android.renderscript.ScriptGroup
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,6 +19,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.SphericalUtil
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -189,13 +192,21 @@ class LocationRepository private constructor(context: Context){
     var route_count = 0
     var leg_count = 0
     var step_count = 0
+    var point_count = 0
     var stopLocation: JSONLatLng? = null
-    fun getStop(route_count: Int, leg_count: Int, step_count: Int): LatLng? {
+    fun getStop(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): LatLng? {
         /**
-         * Get next step in legs in Routes in direction
+         * Get next step in point in legs in Routes in direction
          */
 
-        if (step_count == -1) {
+        var next_stop: LatLng? = null
+        if (_direction.value != null) {
+            val polyline = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points
+            next_stop = PolyUtil.decode(polyline)[point_count]
+        }
+        return next_stop
+
+/*        if (step_count == -1) {
             var start_location: JSONLatLng? = null
             if (_direction.value != null) {
                 start_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count+1)?.start_location
@@ -206,7 +217,7 @@ class LocationRepository private constructor(context: Context){
         if (_direction.value != null) {
             end_location = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.end_location
             }
-        return end_location?.let { LatLng(it.lat!!, it.lng!!) }
+        return end_location?.let { LatLng(it.lat!!, it.lng!!) }*/
         }
 
     fun resetCounting() {
@@ -215,83 +226,92 @@ class LocationRepository private constructor(context: Context){
          */
         route_count = 0
         leg_count = 0
-//        step_count = -1
         step_count = 0
+        point_count = 0
     }
 
-    fun getRouteLegStepSize(route_count: Int, leg_count: Int): IntArray {
+    fun getRouteLegStepPointSize(route_count: Int, leg_count: Int, step_count: Int): IntArray {
         val route = _direction.value!!.routes
         val route_size = route?.size
         val leg = route?.get(route_count)?.legs
         val leg_size = leg?.size
         val step = leg?.get(leg_count)?.steps
         val step_size = step?.size
+        val point = PolyUtil.decode(step?.get(step_count)?.polyline?.points)
+        val point_size = point.size
         if (step_size != null && leg_size != null && route_size != null) {
-            return intArrayOf(route_size, leg_size, step_size)
+            return intArrayOf(route_size, leg_size, step_size, point_size)
         }
-        return intArrayOf(-1, -1, -1)
+        return intArrayOf(-1, -1, -1, -1)
     }
 
-    fun incrementCounting(route_count: Int, leg_count: Int, step_count: Int): IntArray {
-        val sizes = getRouteLegStepSize(route_count, leg_count)
-        val result = intArrayOf(route_count, leg_count, step_count)
-        result[2] += 1
-        if (sizes[2] >= 0 && result[2] >= sizes[2]) {
-            result[2] = 0
-            result[1] += 1
-            if (sizes[1] >= 0 && result[1] >= sizes[1]) {
-                result[1] = 0
-                result[0] += 1
-                if (sizes[0] >= 0 && result[0] >= sizes[0]) {
-                    result[0] = 0
+    fun incrementCounting(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): IntArray {
+        val sizes = getRouteLegStepPointSize(route_count, leg_count, step_count)
+        val result = intArrayOf(route_count, leg_count, step_count, point_count)
+
+        // Can be change to recursive later
+        result[3] += 1
+        if (sizes[3] >= 0 && result[3] >= sizes[3]) {
+            result[3] = 0
+            result[2] += 1
+            if (sizes[2] >= 0 && result[2] >= sizes[2]) {
+                result[2] = 0
+                result[1] += 1
+                if (sizes[1] >= 0 && result[1] >= sizes[1]) {
+                    result[1] = 0
+                    result[0] += 1
+                    if (sizes[0] >= 0 && result[0] >= sizes[0]) {
+                        result[0] = 0
+                    }
                 }
             }
         }
         return result
     }
 
-    fun decrementCounting(route_count: Int, leg_count: Int, step_count: Int): IntArray {
-        val sizes = getRouteLegStepSize(route_count, leg_count)
-        val result = intArrayOf(route_count, leg_count, step_count)
-        if (sizes[0] > 0 && sizes[1] > 0 && sizes[2] > 0) {
-            result[2] -= 1
-            if (result[0] == 0 && result[1] == 0 && result[2] == -1) {
-                // start case
-                return result
-            }
-            if (result[2] < 0) {
-                result[1] -= 1
-                if (result[1] < 0) {
-                    result[0] -= 1
-                    if (result[0] < 0) {
-                        result[0] = sizes[0]-1
+    fun decrementCounting(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): IntArray {
+        val sizes = getRouteLegStepPointSize(route_count, leg_count, step_count)
+        val result = intArrayOf(route_count, leg_count, step_count, point_count)
+        if (sizes[0] > 0 && sizes[1] > 0 && sizes[2] > 0 && sizes[3] > 0) {
+            result[3] -= 1
+            if (result[3] < 0) {
+                result[2] -= 1
+                if (result[2] < 0) {
+                    result[1] -= 1
+                    if (result[1] < 0) {
+                        result[0] -= 1
+                        if (result[0] < 0) {
+                            result[0] = sizes[0]-1
+                        }
+                        val leg = _direction.value!!.routes?.get(result[0])?.legs
+                        val leg_size = leg?.size
+                        if (leg_size != null) {
+                            result[1] = leg_size-1
+                        }
                     }
-                    val leg = _direction.value!!.routes?.get(result[0])?.legs
-                    val leg_size = leg?.size
-                    if (leg_size != null) {
-                        result[1] = leg_size-1
+                    val step = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps
+                    val step_size = step?.size
+                    if (step_size != null) {
+                        result[2] = step_size-1
                     }
                 }
-                val step = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps
-                val step_size = step?.size
-                if (step_size != null) {
-                    result[2] = step_size-1
-                }
+                val point = PolyUtil.decode(_direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points)
+                val point_size = point.size
+                result[3] = point_size-1
             }
             return result
         }
         return sizes
     }
 
-    fun distanceTo(destination: LatLng): Float {
-        val current = LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude)
+    private fun distanceTo(destination: LatLng): Float {
         val result = FloatArray(3)
         Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, destination.latitude, destination.longitude, result)
         return result[0]
     }
 
     var minimumDistance = 300.0f
-    fun getNextPosition(): LatLng? {
+    private fun getNextPosition(): LatLng? {
         /**
          * Determine next position
          *
@@ -319,9 +339,9 @@ class LocationRepository private constructor(context: Context){
          *   else if a > c and b > epsilon or b > c and a > epsilon then
          *      request new direction
          */
-        val currentStop = getStop(route_count, leg_count, step_count)
-        val nextCount = incrementCounting(route_count, leg_count, step_count)
-        val nextStop = getStop(nextCount[0], nextCount[1], nextCount[2])
+        val currentStop = getStop(route_count, leg_count, step_count, point_count)
+        val nextCount = incrementCounting(route_count, leg_count, step_count, point_count)
+        val nextStop = getStop(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
         if (currentStop != null && nextStop != null) {
             val distanceCurrent = distanceTo(currentStop)
             val distanceNext = distanceTo(nextStop)
@@ -331,17 +351,19 @@ class LocationRepository private constructor(context: Context){
             if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
                 return nextStop
             } else if (distanceNext > distanceBetween && distanceCurrent < minimumDistance) {
-                val prevCount = decrementCounting(route_count, leg_count, step_count)
+                val prevCount = decrementCounting(route_count, leg_count, step_count, point_count)
                 route_count = prevCount[0]
                 leg_count = prevCount[1]
                 step_count = prevCount[2]
+                point_count = prevCount[3]
                 return currentStop
             } else if (distanceCurrent > distanceBetween && distanceNext < minimumDistance) {
-                val newCount = incrementCounting(nextCount[0], nextCount[1], nextCount[2])
+                val newCount = incrementCounting(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
                 route_count = nextCount[0]
                 leg_count = nextCount[1]
                 step_count = nextCount[2]
-                return getStop(newCount[0], newCount[1], newCount[2])
+                point_count = nextCount[3]
+                return getStop(newCount[0], newCount[1], newCount[2], newCount[3])
             } else if ((distanceNext > distanceBetween && distanceCurrent > minimumDistance) || (distanceCurrent > distanceBetween && distanceNext > minimumDistance)) {
                 // TODO: find new direction
                 resetCounting()
@@ -420,7 +442,7 @@ class LocationRepository private constructor(context: Context){
     }
 
     // Test purpose
-    val arrowLength = 50.0
+    private val arrowLength = 50.0
     fun calculateOffsetDirectionLocation(): LatLng {
         return SphericalUtil.computeOffset(LatLng(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude), arrowLength, getBearingToNextPosition().toDouble())
     }

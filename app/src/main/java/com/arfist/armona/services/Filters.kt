@@ -134,7 +134,7 @@ class ExtendedKalmanFilter() {
     var R = eye(6)*0.1 // (6, 6)
     var K = zeros(7, 6) // (7, 6)
     val magReference = mat[0, 1, 0].transpose() // (3, 1)
-    val accelReference = mat[0, 0, -1].transpose() // (3, 1)
+    val accelReference = mat[0, 0, 1].transpose() // (3, 1)
 
     fun predict(angular: DoubleArray, deltaTime: Float) {
         val deltaTimeFloat = deltaTime.toDouble()

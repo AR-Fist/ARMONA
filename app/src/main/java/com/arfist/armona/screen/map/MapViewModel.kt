@@ -66,5 +66,5 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()
     fun getOffsetBearing(bearing: Double) = locationRepository.calculateOffsetBearing(bearing)
     fun getOffsetDegree(degree: Double) = locationRepository.calculateOffsetDegree(degree)
-
+    fun getBearingToNextPosition() = locationRepository.getBearingToNextPosition()
 }

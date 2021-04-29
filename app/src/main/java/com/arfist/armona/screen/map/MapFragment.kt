@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -23,6 +24,7 @@ import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.hasPermission
 import com.arfist.armona.screen.ar.ArViewModel
 import com.arfist.armona.services.Direction
+import com.arfist.armona.services.LocationRepository
 import com.arfist.armona.services.LowestMetres
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -207,10 +209,8 @@ class MapFragment : Fragment() {
     private fun drawPolyline() {
         Timber.i("Draw polyline")
         val paths: MutableList<List<LatLng>> = ArrayList()
-        val endLocations: MutableList<LatLng> = ArrayList()
         for (step in direction?.routes?.get(0)?.legs?.get(0)?.steps!!) {
             paths.add(PolyUtil.decode(step.polyline?.points))
-            step.end_location?.let { endLocations.add(LatLng(step.end_location.lat!!, step.end_location.lng!!)) }
         }
 
         for (path in paths) {
@@ -219,18 +219,16 @@ class MapFragment : Fragment() {
                 .addAll(path)
                 .color(Color.GREEN)
             )
+            for (point in path) {
+                googleMap.addCircle(
+                    CircleOptions()
+                        .center(point)
+                        .radius(LowestMetres)
+                        .strokeColor(Color.BLUE)
+                        .strokeWidth(2.0f)
+                )
+            }
         }
-
-        for (point in endLocations) {
-            googleMap.addCircle(
-                CircleOptions()
-                    .center(point)
-                    .radius(LowestMetres)
-                    .strokeColor(Color.BLUE)
-                    .strokeWidth(2.0f)
-            )
-        }
-
         // Test purpose
         testPointing()
     }
@@ -300,15 +298,16 @@ class MapFragment : Fragment() {
         val facing = arViewModel.mGoogleOrientation.value!![0]*180/ PI
         polylineGray.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(facing))
 
+        // rotvec and orientation reference on different convention orientation is referent from y while other is from x
         val rotvec = arViewModel.rotationVector.value!!.values
         val facing2 = Quaternion(rotvec[3], rotvec[0], rotvec[1], rotvec[2]).toEuler()[0]*180/ PI
-        polylineRed.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing2))
+        polylineRed.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing2+90))
 
         val facing3 = arViewModel.complementaryAngle.value!![0]*180/ PI
-        polylineGreen.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing3))
+        polylineGreen.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing3+90))
 
         val facing4 = arViewModel.extendedKalman.value!![0]*180/ PI
-        polylineBlue.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing4))
+        polylineBlue.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing4+90))
 
         val degree = arViewModel.testAngle.value!![0].RadToDeg()
         polylinePurple.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(degree.toDouble()))
