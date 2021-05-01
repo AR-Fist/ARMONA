@@ -198,11 +198,12 @@ class LocationRepository private constructor(context: Context){
         /**
          * Get next step in point in legs in Routes in direction
          */
-
         var next_stop: LatLng? = null
         if (_direction.value != null) {
             val polyline = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points
-            next_stop = PolyUtil.decode(polyline)[point_count]
+            val points = PolyUtil.decode(polyline)
+//            Log.i("TestPointCount", "${route_count}, ${leg_count}, ${step_count}, ${point_count}, ${points.size}")
+            next_stop = points[point_count]
         }
         return next_stop
 
@@ -219,6 +220,10 @@ class LocationRepository private constructor(context: Context){
             }
         return end_location?.let { LatLng(it.lat!!, it.lng!!) }*/
         }
+
+    fun getStop(position: IntArray): LatLng? {
+        return getStop(position[0], position[1], position[2], position[3])
+    }
 
     fun resetCounting() {
         /**
@@ -246,6 +251,7 @@ class LocationRepository private constructor(context: Context){
     }
 
     fun incrementCounting(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): IntArray {
+//        Log.i("Test", "Increment")
         val sizes = getRouteLegStepPointSize(route_count, leg_count, step_count)
         val result = intArrayOf(route_count, leg_count, step_count, point_count)
 
@@ -269,7 +275,12 @@ class LocationRepository private constructor(context: Context){
         return result
     }
 
+    fun incrementCounting(position: IntArray): IntArray {
+        return incrementCounting(position[0], position[1], position[2], position[3])
+    }
+
     fun decrementCounting(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): IntArray {
+//        Log.i("Test", "Decrement, ${route_count}, ${leg_count}, ${step_count}, ${point_count}")
         val sizes = getRouteLegStepPointSize(route_count, leg_count, step_count)
         val result = intArrayOf(route_count, leg_count, step_count, point_count)
         if (sizes[0] > 0 && sizes[1] > 0 && sizes[2] > 0 && sizes[3] > 0) {
@@ -289,13 +300,13 @@ class LocationRepository private constructor(context: Context){
                             result[1] = leg_size-1
                         }
                     }
-                    val step = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps
+                    val step = _direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps
                     val step_size = step?.size
                     if (step_size != null) {
                         result[2] = step_size-1
                     }
                 }
-                val point = PolyUtil.decode(_direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points)
+                val point = PolyUtil.decode(_direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps?.get(result[2])?.polyline?.points)
                 val point_size = point.size
                 result[3] = point_size-1
             }
@@ -310,7 +321,7 @@ class LocationRepository private constructor(context: Context){
         return result[0]
     }
 
-    var minimumDistance = 300.0f
+    var minimumDistance = 100.0f
     private fun getNextPosition(): LatLng? {
         /**
          * Determine next position
@@ -348,6 +359,7 @@ class LocationRepository private constructor(context: Context){
             val temp = FloatArray(1)
             Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
             val distanceBetween = temp[0]
+            Log.i("TestDistance", "${distanceBetween}, ${distanceNext < distanceBetween}, ${distanceCurrent<distanceBetween}, ${distanceNext<minimumDistance}, ${distanceCurrent<minimumDistance}")
             if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
                 return nextStop
             } else if (distanceNext > distanceBetween && distanceCurrent < minimumDistance) {
@@ -373,11 +385,62 @@ class LocationRepository private constructor(context: Context){
         return null
     }
 
+    fun getStopPoint(): LatLng? {
+        var currentCount = intArrayOf(route_count, leg_count, step_count, point_count)
+        var currentPoint = getStop(currentCount)
+        var nextCount = incrementCounting(currentCount)
+        var nextPoint = getStop(nextCount)
+        val baseCount = currentCount.copyOf()
+        while (!baseCount.contentEquals(nextCount)) {
+            val result = FloatArray(1)
+            Location.distanceBetween(
+                currentPoint!!.latitude,
+                currentPoint.longitude,
+                nextPoint!!.latitude,
+                nextPoint.longitude,
+                result
+            )
+            val pointToPoint = result[0]
+            val pointToHere = distanceTo(currentPoint)
+            if (pointToHere <= pointToPoint) {
+                val ratio = pointToHere / pointToPoint
+                val midPoint = SphericalUtil.interpolate(currentPoint, nextPoint, ratio.toDouble())
+                val offset = distanceTo(midPoint)
+                if (offset <= minimumDistance) {
+                    route_count = currentCount[0]
+                    leg_count = currentCount[1]
+                    step_count = currentCount[2]
+                    point_count = currentCount[3]
+                    return nextPoint
+                } else {
+                    // TODO: find new direction
+                    val prevCount =
+                        decrementCounting(route_count, leg_count, step_count, point_count)
+                    route_count = prevCount[0]
+                    leg_count = prevCount[1]
+                    step_count = prevCount[2]
+                    point_count = prevCount[3]
+                    return currentPoint
+                }
+            }
+            currentCount = nextCount.copyOf()
+            currentPoint = getStop(currentCount)
+            nextCount = incrementCounting(nextCount)
+            nextPoint = getStop(nextCount)
+        }
+        // TODO: find new direction
+        return nextPoint
+    }
+
+
     fun getBearingToNextPosition(): Float {
         val result = FloatArray(3)
-        getNextPosition()?.let {
-            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
-                it.latitude, it.longitude, result)
+//        getNextPosition()?.let {
+//            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude,
+//                it.latitude, it.longitude, result)
+//        }
+        getStopPoint()?.let {
+            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, it.latitude, it.longitude, result)
         }
 
         return result[1]

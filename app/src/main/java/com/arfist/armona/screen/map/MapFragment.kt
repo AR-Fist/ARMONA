@@ -89,6 +89,7 @@ class MapFragment : Fragment() {
 
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
             getOrientation(it.timestamp)
+//            Timber.i("${::polylineBlack.isInitialized}, ${::polylineGray.isInitialized}, ${::polylineRed.isInitialized}, ${::polylineGreen.isInitialized}, ${::polylineBlue.isInitialized}, ${::polylineCyan.isInitialized}, ${::polylineMagenta.isInitialized}, ${::polylineYellow.isInitialized}, ${::polylineWhite.isInitialized}, ${::polylinePurple.isInitialized}")
             if (direction != null
                 && ::polylineBlack.isInitialized
                 && ::polylineGray.isInitialized
@@ -245,9 +246,11 @@ class MapFragment : Fragment() {
     lateinit var polylineWhite: Polyline
     lateinit var polylinePurple: Polyline
     private fun testPointing() {
+        Timber.i("Init pointer")
         val latlngDirection = mapViewModel.getOffsetDirection()
         val north = mapViewModel.getOffsetNorth()
         val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
+        Timber.i("${latlngDirection}, ${north}, ${currentLatLng}")
         polylineBlack = googleMap.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, latlngDirection))
             .clickable(false)
@@ -291,6 +294,7 @@ class MapFragment : Fragment() {
     }
 
     private fun updatePointing() {
+        Timber.i("Update pointer")
         val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
         // Bearing
         polylineBlack.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDirection())

@@ -57,17 +57,23 @@ class SensorsRepository private constructor(context: Context): SensorEventListen
     val rotationVector: LiveData<SensorEvent>
         get() = _rotationVector
 
-    private val sensorsList = arrayOf(
-        Sensor.TYPE_ACCELEROMETER,
+//    private val sensorsList = arrayOf(
+//        Sensor.TYPE_ACCELEROMETER,
 //        Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
 //        Sensor.TYPE_LINEAR_ACCELERATION,
-        Sensor.TYPE_GYROSCOPE,
+//        Sensor.TYPE_GYROSCOPE,
 //        Sensor.TYPE_GYROSCOPE_UNCALIBRATED,
-        Sensor.TYPE_MAGNETIC_FIELD,
+//        Sensor.TYPE_MAGNETIC_FIELD,
 //        Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED,
 //        Sensor.TYPE_GRAVITY,
-        Sensor.TYPE_ROTATION_VECTOR
-    )
+//        Sensor.TYPE_ROTATION_VECTOR
+//    )
+private val sensorsList = arrayOf(
+    Sensor.TYPE_ACCELEROMETER,
+    Sensor.TYPE_GYROSCOPE,
+    Sensor.TYPE_MAGNETIC_FIELD,
+    Sensor.TYPE_ROTATION_VECTOR
+)
 
     private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -85,15 +91,21 @@ class SensorsRepository private constructor(context: Context): SensorEventListen
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
 //            _sensorsMap.value?.set(event.sensor.type, event)
-            when(event.sensor.type) {
-                Sensor.TYPE_ACCELEROMETER ->  _accelerometer.value = event
+//            when(event.sensor.type) {
+//                Sensor.TYPE_ACCELEROMETER ->  _accelerometer.value = event
 //                Sensor.TYPE_ACCELEROMETER_UNCALIBRATED -> _uncalibratedAccelerometer.value = event
 //                Sensor.TYPE_LINEAR_ACCELERATION -> _linearAccelerometer.value = event
-                Sensor.TYPE_GYROSCOPE -> _gyroscope.value = event
+//                Sensor.TYPE_GYROSCOPE -> _gyroscope.value = event
 //                Sensor.TYPE_GYROSCOPE_UNCALIBRATED -> _uncalibratedGyroscope.value = event
-                Sensor.TYPE_MAGNETIC_FIELD -> _magnetometer.value = event
+//                Sensor.TYPE_MAGNETIC_FIELD -> _magnetometer.value = event
 //                Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED -> _uncalibratedMagnetoMeter.value = event
 //                Sensor.TYPE_GRAVITY -> _gravity.value = event
+//                Sensor.TYPE_ROTATION_VECTOR -> _rotationVector.value = event
+//            }
+            when(event.sensor.type) {
+                Sensor.TYPE_ACCELEROMETER ->  _accelerometer.value = event
+                Sensor.TYPE_GYROSCOPE -> _gyroscope.value = event
+                Sensor.TYPE_MAGNETIC_FIELD -> _magnetometer.value = event
                 Sensor.TYPE_ROTATION_VECTOR -> _rotationVector.value = event
             }
         }
