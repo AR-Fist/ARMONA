@@ -19,6 +19,7 @@ private fun toBuffer(fa: FloatArray) = ByteBuffer
         position(0)
     }
 
+/** reactive update matrix every frame **/
 private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
@@ -31,7 +32,11 @@ private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
         // first transform
     }
 }
+private fun calculateProjectionMatrix(matrix: FloatArray, fovy: Float) {
+    Matrix.perspectiveM(matrix, 0, fovy, 1f / 1f, 0f, 10f)
+}
 
+/** real renderer **/
 class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.Renderer {
 
     lateinit var program: CameraGLProgram
@@ -43,8 +48,7 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
 
     val view_matrix = FloatArray(16).apply {
         Matrix.setLookAtM(this, 0, 0f, 2.3f, 1.6f, 0f, 0f, 0f, 0f, 0f, 2f); }
-    val projection_matrix = FloatArray(16).apply {
-        Matrix.perspectiveM(this, 0, viewModel.arrowFovy, 1f / 1f, 0f, 10f) }
+    val projection_matrix = FloatArray(16).apply { calculateProjectionMatrix(this, viewModel.arrowFovy) }
 
     private var external_texture by Delegates.notNull<Int>()
 
@@ -73,6 +77,7 @@ class CameraGLRenderer(private val viewModel: CameraGLViewModel): GLSurfaceView.
         Timber.i("CameraGLRenderer draw frame")
         // update model
         calculateModelMatrix(model_matrix, viewModel.arrowRotation)
+        calculateProjectionMatrix(projection_matrix, viewModel.arrowFovy)
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glEnable(GL_BLEND)
