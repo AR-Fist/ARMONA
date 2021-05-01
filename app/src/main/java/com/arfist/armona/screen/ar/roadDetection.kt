@@ -6,6 +6,8 @@ import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import timber.log.Timber
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan
 import kotlin.math.atan2
 
 typealias Transformer = (Point?, Size) -> Point
@@ -217,5 +219,11 @@ class RoadDetectionService(magicX: Float, magicY: Float) {
             return Pair(xi.toInt(), yi.toInt())
         }
     }
-}
 
+    public fun getFovy(left: ArrayList<Int>,right: ArrayList<Int>,i: Mat) : Double {
+        // alpha is the angle of side triangle in the trapezoid
+        val alpha_1 = atan(abs(right[3]-i.height())/abs(i.width()/2.0 + magicX)) * 180.0 / PI
+        val alpha_2 = atan(abs(left[1]-0.0)/abs(i.width()/2.0 + magicX)) * 180.0 / PI
+        return alpha_1 + alpha_2
+    }
+}
