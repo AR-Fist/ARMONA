@@ -37,7 +37,7 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     fun onPermissionGranted() {
         Timber.i("onPermissionGranted")
         locationRepository.startLocationUpdates()
-        locationRepository.getSurrounding()
+//        locationRepository.getSurrounding()
         _permissionGranted.value = true
     }
 

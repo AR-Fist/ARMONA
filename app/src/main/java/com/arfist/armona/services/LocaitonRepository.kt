@@ -236,6 +236,9 @@ class LocationRepository private constructor(context: Context){
     }
 
     fun getRouteLegStepPointSize(route_count: Int, leg_count: Int, step_count: Int): IntArray {
+        if (_direction.value == null ){
+            return intArrayOf(-1, -1, -1, -1)
+        }
         val route = _direction.value!!.routes
         val route_size = route?.size
         val leg = route?.get(route_count)?.legs
