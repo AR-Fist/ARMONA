@@ -47,20 +47,24 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
         _permissionGranted.value = false
     }
 
-    fun getDirection(destination: String) {
-        Timber.i("Get direction: ${lastLocation.value?.getStringFormat()}, ${destination}.")
-        viewModelScope.launch {
-            try {
-                lastLocation.value?.let {
-                    locationRepository.getDirection(
-                        it.getStringFormat(), destination)
-                }?.let { locationRepository.setDirection(it) }
-                Timber.i("get direction success")
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
-        }
+    fun setDestination(destination: String){
+        locationRepository.destination = destination
     }
+
+//    fun getDirection(destination: String) {
+//        Timber.i("Get direction: ${lastLocation.value?.getStringFormat()}, ${destination}.")
+//        viewModelScope.launch {
+//            try {
+//                lastLocation.value?.let {
+//                    locationRepository.getDirection(
+//                        it.getStringFormat(), destination)
+//                }?.let { locationRepository.setDirection(it) }
+//                Timber.i("get direction success")
+//            } catch (e: Exception) {
+//                Timber.e(e)
+//            }
+//        }
+//    }
 
     fun getOffsetDirection() = locationRepository.calculateOffsetDirectionLocation()
     fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()

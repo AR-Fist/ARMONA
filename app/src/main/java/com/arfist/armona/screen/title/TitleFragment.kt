@@ -85,7 +85,7 @@ class TitleFragment : Fragment() {
         autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
                 Timber.i(place.name)
-                mapViewModel.getDirection(place.name!!)
+                mapViewModel.setDestination(place.name!!)
             }
 
             override fun onError(status: Status) {

@@ -24,6 +24,7 @@ import com.google.maps.android.SphericalUtil
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
@@ -56,13 +57,31 @@ class LocationRepository private constructor(context: Context){
         //---
     }
 
+    private var isFetchDirectionNeeded = false
+
     private var _currentLocation = MutableLiveData<Location>()
     val currentLocation: LiveData<Location>
         get() = _currentLocation
 
+
+    var destination: String = ""
+    set(value) {
+        isFetchDirectionNeeded = true
+        field = value
+    }
+
+
     private var _direction = MutableLiveData<Direction>()
     val direction: LiveData<Direction>
-        get() = _direction
+        get() {
+            if (isFetchDirectionNeeded){
+                runBlocking {
+                    setDirection(getDirection(currentLocation.value!!.getStringFormat(), destination))
+                    isFetchDirectionNeeded = false
+                }
+            }
+            return _direction
+        }
 
     // Location service provider with fine+coarse
     // This is what get call to get the location lat lng
@@ -122,6 +141,7 @@ class LocationRepository private constructor(context: Context){
         get() = _surroundPlaceNames
 
     fun setDirection(value: Direction) {
+        Timber.i("Setting direction")
         _direction.value = value
     }
 
@@ -199,8 +219,8 @@ class LocationRepository private constructor(context: Context){
          * Get next step in point in legs in Routes in direction
          */
         var next_stop: LatLng? = null
-        if (_direction.value != null) {
-            val polyline = _direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points
+        if (direction.value != null) {
+            val polyline = direction.value!!.routes?.get(route_count)?.legs?.get(leg_count)?.steps?.get(step_count)?.polyline?.points
             val points = PolyUtil.decode(polyline)
 //            Log.i("TestPointCount", "${route_count}, ${leg_count}, ${step_count}, ${point_count}, ${points.size}")
             next_stop = points[point_count]
@@ -236,10 +256,10 @@ class LocationRepository private constructor(context: Context){
     }
 
     fun getRouteLegStepPointSize(route_count: Int, leg_count: Int, step_count: Int): IntArray {
-        if (_direction.value == null ){
+        if (direction.value == null ){
             return intArrayOf(-1, -1, -1, -1)
         }
-        val route = _direction.value!!.routes
+        val route = direction.value!!.routes
         val route_size = route?.size
         val leg = route?.get(route_count)?.legs
         val leg_size = leg?.size
@@ -297,19 +317,19 @@ class LocationRepository private constructor(context: Context){
                         if (result[0] < 0) {
                             result[0] = sizes[0]-1
                         }
-                        val leg = _direction.value!!.routes?.get(result[0])?.legs
+                        val leg = direction.value!!.routes?.get(result[0])?.legs
                         val leg_size = leg?.size
                         if (leg_size != null) {
                             result[1] = leg_size-1
                         }
                     }
-                    val step = _direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps
+                    val step = direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps
                     val step_size = step?.size
                     if (step_size != null) {
                         result[2] = step_size-1
                     }
                 }
-                val point = PolyUtil.decode(_direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps?.get(result[2])?.polyline?.points)
+                val point = PolyUtil.decode(direction.value!!.routes?.get(result[0])?.legs?.get(result[1])?.steps?.get(result[2])?.polyline?.points)
                 val point_size = point.size
                 result[3] = point_size-1
             }

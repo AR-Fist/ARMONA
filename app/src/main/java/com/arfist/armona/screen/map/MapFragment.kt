@@ -38,7 +38,7 @@ class MapFragment : Fragment() {
 
     // Init
     private lateinit var binding: MapFragmentBinding
-    private lateinit var googleMap: GoogleMap
+    private var googleMap: GoogleMap? = null
     private val mapViewModel: MapViewModel by activityViewModels()
     private var isPermissionGranted = false
     private var direction: Direction? = null
@@ -114,8 +114,8 @@ class MapFragment : Fragment() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-            else if(followLocation && ::googleMap.isInitialized){
-                googleMap.moveCamera(
+            else if(followLocation && googleMap != null){
+                googleMap!!.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
                         LatLng(location.latitude, location.longitude),
                         DEFAULT_ZOOM.toFloat()
@@ -124,7 +124,7 @@ class MapFragment : Fragment() {
         })
 
         mapViewModel.permissionGranted.observe(viewLifecycleOwner, {
-            if(it && ::googleMap.isInitialized) {
+            if(it) {
                 isPermissionGranted = true
                 updateGoogleMapsUI()
             } else if(!it) {
@@ -187,14 +187,15 @@ class MapFragment : Fragment() {
     // Update google map
     private fun updateGoogleMapsUI() {
         Timber.i("updateGoogleUI")
+        if (googleMap == null) return
         try {
             if (isPermissionGranted) {
-                googleMap.isMyLocationEnabled = true
-                googleMap.uiSettings?.isMyLocationButtonEnabled = true
+                googleMap!!.isMyLocationEnabled = true
+                googleMap!!.uiSettings?.isMyLocationButtonEnabled = true
                 drawPolyline()
             } else {
-                googleMap.isMyLocationEnabled = false
-                googleMap.uiSettings?.isMyLocationButtonEnabled = false
+                googleMap!!.isMyLocationEnabled = false
+                googleMap!!.uiSettings?.isMyLocationButtonEnabled = false
                 getPermission()
             }
         } catch (e: SecurityException) {
@@ -215,13 +216,13 @@ class MapFragment : Fragment() {
         }
 
         for (path in paths) {
-            googleMap.addPolyline(PolylineOptions()
+            googleMap!!.addPolyline(PolylineOptions()
                 .clickable(false)
                 .addAll(path)
                 .color(Color.GREEN)
             )
             for (point in path) {
-                googleMap.addCircle(
+                googleMap!!.addCircle(
                     CircleOptions()
                         .center(point)
                         .radius(LowestMetres)
@@ -251,43 +252,43 @@ class MapFragment : Fragment() {
         val north = mapViewModel.getOffsetNorth()
         val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
         Timber.i("${latlngDirection}, ${north}, ${currentLatLng}")
-        polylineBlack = googleMap.addPolyline(PolylineOptions()
+        polylineBlack = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, latlngDirection))
             .clickable(false)
             .color(Color.BLACK))
-        polylineGray = googleMap.addPolyline(PolylineOptions()
+        polylineGray = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.GRAY))
-        polylineRed = googleMap.addPolyline(PolylineOptions()
+        polylineRed = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.RED))
-        polylineGreen = googleMap.addPolyline(PolylineOptions()
+        polylineGreen = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.GREEN))
-        polylineBlue = googleMap.addPolyline(PolylineOptions()
+        polylineBlue = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.BLUE))
-        polylineCyan = googleMap.addPolyline(PolylineOptions()
+        polylineCyan = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.CYAN))
-        polylineMagenta = googleMap.addPolyline(PolylineOptions()
+        polylineMagenta = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.MAGENTA))
-        polylineYellow = googleMap.addPolyline(PolylineOptions()
+        polylineYellow = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.YELLOW))
-        polylineWhite = googleMap.addPolyline(PolylineOptions()
+        polylineWhite = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.WHITE))
-        polylinePurple = googleMap.addPolyline(PolylineOptions()
+        polylinePurple = googleMap!!.addPolyline(PolylineOptions()
             .addAll(arrayListOf(currentLatLng, north))
             .clickable(false)
             .color(Color.argb(255, 153, 0, 255)))
