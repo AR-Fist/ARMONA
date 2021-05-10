@@ -1,58 +1,198 @@
 package com.arfist.armona.screen.ar
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import androidx.lifecycle.ViewModelProvider
 import android.graphics.Color
 import android.hardware.SensorEvent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
-import com.arfist.armona.Quaternion
 import com.arfist.armona.R
 import com.arfist.armona.databinding.ArFragmentBinding
 import com.arfist.armona.screen.map.MapViewModel
-import com.jjoe64.graphview.GraphView
-import com.jjoe64.graphview.Viewport
-import com.jjoe64.graphview.series.DataPoint
-import com.jjoe64.graphview.series.LineGraphSeries
 import timber.log.Timber
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import org.opencv.android.Utils
+import org.opencv.imgproc.Imgproc
+import java.util.concurrent.Executors
+import android.os.Build
+import android.util.Rational
+import androidx.annotation.RequiresApi
+import org.opencv.android.OpenCVLoader
+import org.opencv.core.*
+import org.opencv.core.Point
+import com.arfist.armona.utils.toBitmap
+import android.util.Size
+import android.widget.ImageView
+import kotlin.math.ceil
 
+@SuppressLint("UnsafeExperimentalUsageError")
 class ArFragment : Fragment() {
 
-    // Instant
     private lateinit var viewModel: ArViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
+    private var executors = Array(2){ Executors.newSingleThreadExecutor() }
+    private var roadDetectionSvc: RoadDetectionService? = null
 
     // Sensor: Axis convention https://developer.android.com/reference/android/hardware/SensorEvent#values
     private lateinit var sensorManager: SensorManager
 
-    // Plot
-    private val graphs = ArrayList<GraphView>()
-    private val series = ArrayList<LineGraphSeries<DataPoint>>()
+    companion object {
+        private const val TAG = "CameraXBasic"
+        private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+    }
 
-    private val graphSize = 5
-    private val dataSize = 3
-    private val seriesSize = graphSize*dataSize
-    //
+    private fun allRequiredPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
+    }
 
+    @RequiresApi(Build.VERSION_CODES.P)
+    @androidx.camera.core.ExperimentalGetImage()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         Timber.i("onCreateView")
 
+        if (this.allRequiredPermissionsGranted()){
+            setupCam(container!!)
+        }else{
+            ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        }
+
+        // init OpenCV
+        if(OpenCVLoader.initDebug()) {
+            Log.i("OpenCV", "Load successfully")
+        }
+        else {
+            Log.e("OpenCV", "Load fail")
+        }
+
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
         return binding.root
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun setupCam(container: ViewGroup) {
+        val cameraProvider = ProcessCameraProvider.getInstance(requireContext()).get()
+        val roadDetectionUseCase = ImageAnalysis.Builder()
+            .setTargetResolution(Size(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
+            .build()
+            .also {
+                it.setAnalyzer(
+                    executors[0],
+                    {imageProxy -> detectRoad(imageProxy, container)},
+                )
+            }
+
+        val liveCamViewUseCase = ImageAnalysis.Builder()
+            .setTargetResolution(Size(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
+            .build()
+            .also {
+                it.setAnalyzer(
+                    executors[1],
+                    {imageProxy -> liveCamView(imageProxy, container)},
+                )
+            }
+
+        // Select back camera as a default
+        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+        try {
+            // Unbind use cases before rebinding
+            cameraProvider.unbindAll()
+
+//            Timber.i(cameraProvider.)
+
+            // Bind use cases to camera
+            cameraProvider.bindToLifecycle(this, cameraSelector, roadDetectionUseCase, liveCamViewUseCase)
+
+        } catch (exc: Exception) {
+            Log.e(TAG, "Use case binding failed", exc)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun liveCamView(imageproxy: ImageProxy, container: ViewGroup){
+        var glview = container.findViewById<GLView>(R.id.gl_view)
+        glview.streamCameraView(imageproxy.image!!.toBitmap())
+        imageproxy.close()
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun detectRoad(imageproxy: ImageProxy, container: ViewGroup){
+
+        // get image from image proxy
+        val img = imageproxy.image!!.toBitmap()
+        val _rgba = Mat()
+        Utils.bitmapToMat(img, _rgba)
+        val desiredSize = org.opencv.core.Size(ceil(_rgba.width() * 240.0 / _rgba.height()), 240.0)
+        val rgba = Mat(desiredSize, _rgba.type())
+        Imgproc.resize(_rgba, rgba, desiredSize)
+        Timber.i("Processing those image with resolution W=${rgba.width()}, H=${rgba.height()}")
+
+        if (roadDetectionSvc == null)
+            roadDetectionSvc = RoadDetectionService(20f * desiredSize.height.toFloat() / 480f, 150f * desiredSize.width.toFloat() / 640f)
+        var resultLines = roadDetectionSvc!!.detectRoadFromBitmap(rgba)
+
+        // plot left
+        var left = resultLines[0]
+        Log.d("Left line (x1,y1,x2,y2)",left.toString())
+        var pt1 = Point(left[0].toDouble(), left[1].toDouble())
+        var pt2 = Point(left[2].toDouble(), left[3].toDouble())
+        //Drawing lines on an image
+        Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
+
+        // plot right
+        var right = resultLines[1]
+        Log.d("Right line (x1,y1,x2,y2)",right.toString())
+        pt1 = Point(right[0].toDouble(), right[1].toDouble())
+        pt2 = Point(right[2].toDouble(), right[3].toDouble())
+        //Drawing lines on an image
+        Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
+
+        var glview = container.findViewById<GLView>(R.id.gl_view)
+        glview.updateRoadLine(
+                resultLines.fold(ArrayList<android.graphics.Point>())
+                {
+                    arr, side ->
+                    arrayOf(1, 0).fold(arr)
+                    { a, i ->
+                        a.add(android.graphics.Point(side[i * 2 + 1], side[i * 2])); a
+                    }
+                }.toTypedArray(),
+            android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
+        )
+
+        val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(rgba, newImage)
+//        val resultBitmap = img?.copy(Bitmap.Config.RGB_565, true)
+
+        requireActivity().runOnUiThread {
+            var imgview = container.findViewById<ImageView>(R.id.image_view)
+            imgview.setImageBitmap(newImage)
+        }
+
+        imageproxy.close()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -64,105 +204,10 @@ class ArFragment : Fragment() {
         viewModel.registerSensors()
 
         binding.arViewModel = viewModel
-
         binding.buttonArMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
-
-        // Plot
-        observeSensors()
-        initGraphSeries()
-        configGraph()
-        configSeries()
-        //
     }
-
-    private fun observeSensors() {
-
-        binding.arViewModel!!.mGoogleOrientation.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 0)
-        })
-
-        binding.arViewModel!!.myOrientationAngle.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 1)
-        })
-
-        binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 2)
-        })
-
-        binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 3)
-        })
-
-        binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
-            getOrientation(it.timestamp)
-            val rotvecang = Quaternion(it.values[3], it.values[0], it.values[1], it.values[2]).toEuler()
-            series.appendData(it.timestamp.toDouble(), rotvecang, 4)
-        })
-    }
-
-    // Continuous call to calculate orientation
-    private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
-
-    // Plot
-    private fun ArrayList<LineGraphSeries<DataPoint>>.appendData(timestamp: Double, values: FloatArray, count: Int) {
-        val startIndex = count*3
-        for (i in 0 until dataSize) {
-            this[startIndex+i].appendData(DataPoint(timestamp, values[i].toDouble()), true, 100)
-        }
-    }
-
-    private fun initGraphSeries() {
-        graphs.add(requireView().findViewById(R.id.graphRotVec))
-        graphs.add(requireView().findViewById(R.id.graphGGOrient))
-        graphs.add(requireView().findViewById(R.id.graphComplementary))
-        graphs.add(requireView().findViewById(R.id.graphMyOrient))
-        graphs.add(requireView().findViewById(R.id.graphKalman))
-        graphs.add(requireView().findViewById(R.id.graphArrow))
-
-        for (i in 0 until seriesSize) {
-            series.add(LineGraphSeries<DataPoint>())
-        }
-    }
-    private fun configGraph() {
-        for (i in 0 until graphSize) {
-            configViewPort(graphs[i].viewport)
-            add3Series(graphs[i], i)
-            configNormalGraph(graphs[i])
-        }
-    }
-
-    private fun add3Series(graph: GraphView, num: Int) {
-        for (i in 0 until dataSize) {
-            graph.addSeries(series[i+(num*3)])
-        }
-    }
-
-    private fun configSeries() {
-        for (i in 0 until graphSize) {
-            series[0+(3*i)].title = "Yaw"
-            series[0+(3*i)].color = Color.RED
-            series[1+(3*i)].title = "Pitch"
-            series[1+(3*i)].color = Color.GREEN
-            series[2+(3*i)].title = "Roll"
-            series[2+(3*i)].color = Color.BLUE
-        }
-    }
-
-    private fun configNormalGraph(graph: GraphView) {
-        graph.legendRenderer.isVisible = true
-    }
-    private fun configViewPort(viewPort: Viewport) {
-        viewPort.isScalable = true
-        viewPort.isXAxisBoundsManual = true
-        viewPort.setMinX(0.0)
-        viewPort.setMaxX(1000000000.0)
-        viewPort.isYAxisBoundsManual = true
-        viewPort.setMinY(-5.0)
-        viewPort.setMaxY(5.0)
-    }
-    //
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Timber.i("onActivityCreated")

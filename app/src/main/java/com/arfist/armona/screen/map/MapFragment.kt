@@ -21,7 +21,7 @@ import com.arfist.armona.Quaternion
 import com.arfist.armona.R
 import com.arfist.armona.RadToDeg
 import com.arfist.armona.databinding.MapFragmentBinding
-import com.arfist.armona.hasPermission
+import com.arfist.armona.utils.hasPermission
 import com.arfist.armona.screen.ar.ArViewModel
 import com.arfist.armona.services.Direction
 import com.arfist.armona.services.LocationRepository

@@ -2,8 +2,8 @@
 buildscript {
     ext {
         kotlinVersion = "1.4.21"
-        navigationVersion = "2.3.2"
-        moshiVersion = "1.9.3"
+        navigationVersion = '2.3.3'
+        moshiVersion = '1.11.0'
         retrofitVersion = "2.9.0"
     }
     repositories {
@@ -11,7 +11,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.1.1"
+        classpath 'com.android.tools.build:gradle:4.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$navigationVersion"
         // NOTE: Do not place your application dependencies here; they belong

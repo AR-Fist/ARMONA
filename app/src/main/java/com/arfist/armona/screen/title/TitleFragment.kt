@@ -15,7 +15,7 @@ import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
 import com.arfist.armona.MainActivity.Companion.permissionList
 import com.arfist.armona.R
 import com.arfist.armona.databinding.TitleFragmentBinding
-import com.arfist.armona.hasPermission
+import com.arfist.armona.utils.hasPermission
 import com.arfist.armona.screen.map.MapFragment
 import com.arfist.armona.screen.map.MapViewModel
 import com.google.android.gms.common.api.Status

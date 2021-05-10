@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.arfist.armona.utils.getStringFormat
+import com.arfist.armona.services.Direction
 import com.arfist.armona.getStringFormat
 import com.arfist.armona.services.LocationRepository
 import com.arfist.armona.services.LowestMetres
