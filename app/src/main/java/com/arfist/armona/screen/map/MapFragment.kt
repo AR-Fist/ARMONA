@@ -44,7 +44,6 @@ class MapFragment : Fragment() {
     private var direction: Direction? = null
     private var followLocation = false
 
-    // Temp
     private val arViewModel: ArViewModel by activityViewModels()
     //
 
@@ -72,7 +71,6 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
-    // Test
     private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -84,7 +82,6 @@ class MapFragment : Fragment() {
                 .navigate(MapFragmentDirections.actionMapFragmentToArFragment())
         }
 
-        binding.arViewModel = arViewModel
         arViewModel.registerSensors()
 
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
