@@ -22,7 +22,6 @@ import com.arfist.armona.R
 import com.arfist.armona.RadToDeg
 import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.utils.hasPermission
-import com.arfist.armona.screen.ar.ArViewModel
 import com.arfist.armona.services.Direction
 import com.arfist.armona.services.LocationRepository
 import com.arfist.armona.services.LowestMetres
@@ -43,9 +42,6 @@ class MapFragment : Fragment() {
     private var isPermissionGranted = false
     private var direction: Direction? = null
     private var followLocation = false
-
-    private val arViewModel: ArViewModel by activityViewModels()
-    //
 
     companion object {
         private const val DEFAULT_ZOOM = 15
@@ -71,8 +67,6 @@ class MapFragment : Fragment() {
         return binding.root
     }
 
-    private fun getOrientation(timestamp: Long) = binding.arViewModel?.getOrientation(timestamp)
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Timber.i("onViewCreated")
         super.onViewCreated(view, savedInstanceState)
@@ -81,27 +75,6 @@ class MapFragment : Fragment() {
             viewGet.findNavController()
                 .navigate(MapFragmentDirections.actionMapFragmentToArFragment())
         }
-
-        arViewModel.registerSensors()
-
-        binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
-            getOrientation(it.timestamp)
-//            Timber.i("${::polylineBlack.isInitialized}, ${::polylineGray.isInitialized}, ${::polylineRed.isInitialized}, ${::polylineGreen.isInitialized}, ${::polylineBlue.isInitialized}, ${::polylineCyan.isInitialized}, ${::polylineMagenta.isInitialized}, ${::polylineYellow.isInitialized}, ${::polylineWhite.isInitialized}, ${::polylinePurple.isInitialized}")
-            if (direction != null
-                && ::polylineBlack.isInitialized
-                && ::polylineGray.isInitialized
-                && ::polylineRed.isInitialized
-                && ::polylineGreen.isInitialized
-                && ::polylineBlue.isInitialized
-                && ::polylineCyan.isInitialized
-                && ::polylineMagenta.isInitialized
-                && ::polylineYellow.isInitialized
-                && ::polylineWhite.isInitialized
-                && ::polylinePurple.isInitialized
-            ) {
-                updatePointing()
-            }
-        })
 
         mapViewModel.lastLocation.observe(viewLifecycleOwner, { location ->
             if (location == null) {
@@ -228,93 +201,8 @@ class MapFragment : Fragment() {
                 )
             }
         }
-        // Test purpose
-        testPointing()
     }
 
-    // Test purpose
-    lateinit var polylineBlack: Polyline
-    lateinit var polylineGray: Polyline
-    lateinit var polylineRed: Polyline
-    lateinit var polylineGreen: Polyline
-    lateinit var polylineBlue: Polyline
-    lateinit var polylineCyan: Polyline
-    lateinit var polylineMagenta: Polyline
-    lateinit var polylineYellow: Polyline
-    lateinit var polylineWhite: Polyline
-    lateinit var polylinePurple: Polyline
-    private fun testPointing() {
-        Timber.i("Init pointer")
-        val latlngDirection = mapViewModel.getOffsetDirection()
-        val north = mapViewModel.getOffsetNorth()
-        val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
-        Timber.i("${latlngDirection}, ${north}, ${currentLatLng}")
-        polylineBlack = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, latlngDirection))
-            .clickable(false)
-            .color(Color.BLACK))
-        polylineGray = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.GRAY))
-        polylineRed = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.RED))
-        polylineGreen = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.GREEN))
-        polylineBlue = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.BLUE))
-        polylineCyan = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.CYAN))
-        polylineMagenta = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.MAGENTA))
-        polylineYellow = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.YELLOW))
-        polylineWhite = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.WHITE))
-        polylinePurple = googleMap!!.addPolyline(PolylineOptions()
-            .addAll(arrayListOf(currentLatLng, north))
-            .clickable(false)
-            .color(Color.argb(255, 153, 0, 255)))
-    }
-
-    private fun updatePointing() {
-        Timber.i("Update pointer")
-        val currentLatLng = LatLng(mapViewModel.lastLocation.value!!.latitude, mapViewModel.lastLocation.value!!.longitude)
-        // Bearing
-        polylineBlack.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDirection())
-
-        val facing = arViewModel.mGoogleOrientation.value!![0]*180/ PI
-        polylineGray.points = arrayListOf(currentLatLng, mapViewModel.getOffsetBearing(facing))
-
-        // rotvec and orientation reference on different convention orientation is referent from y while other is from x
-        val rotvec = arViewModel.rotationVector.value!!.values
-        val facing2 = Quaternion(rotvec[3], rotvec[0], rotvec[1], rotvec[2]).toEuler()[0]*180/ PI
-        polylineRed.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing2+90))
-
-        val facing3 = arViewModel.complementaryAngle.value!![0]*180/ PI
-        polylineGreen.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing3+90))
-
-        val facing4 = arViewModel.extendedKalman.value!![0]*180/ PI
-        polylineBlue.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(facing4+90))
-
-        val degree = arViewModel.testAngle.value!![0].RadToDeg()
-        polylinePurple.points = arrayListOf(currentLatLng, mapViewModel.getOffsetDegree(degree.toDouble()))
-    }
-    //
     override fun onStart() {
         Timber.i("onStart")
         super.onStart()

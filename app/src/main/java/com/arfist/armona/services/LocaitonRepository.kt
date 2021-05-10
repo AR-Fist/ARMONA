@@ -66,22 +66,16 @@ class LocationRepository private constructor(context: Context){
 
     var destination: String = ""
     set(value) {
-        isFetchDirectionNeeded = true
         field = value
+        runBlocking {
+            setDirection(getDirection(currentLocation.value!!.getStringFormat(), value))
+        }
     }
 
 
     private var _direction = MutableLiveData<Direction>()
     val direction: LiveData<Direction>
-        get() {
-            if (isFetchDirectionNeeded){
-                runBlocking {
-                    setDirection(getDirection(currentLocation.value!!.getStringFormat(), destination))
-                    isFetchDirectionNeeded = false
-                }
-            }
-            return _direction
-        }
+        get() = _direction
 
     // Location service provider with fine+coarse
     // This is what get call to get the location lat lng
