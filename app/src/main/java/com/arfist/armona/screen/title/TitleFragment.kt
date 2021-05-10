@@ -27,10 +27,6 @@ import timber.log.Timber
 
 class TitleFragment : Fragment() {
 
-//    companion object {
-//        fun newInstance() = TitleFragment()
-//    }
-
     private lateinit var viewModel: TitleViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: TitleFragmentBinding
@@ -89,7 +85,7 @@ class TitleFragment : Fragment() {
         autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
                 Timber.i(place.name)
-                mapViewModel.getDirection(place.name!!)
+                mapViewModel.setDestination(place.name!!)
             }
 
             override fun onError(status: Status) {

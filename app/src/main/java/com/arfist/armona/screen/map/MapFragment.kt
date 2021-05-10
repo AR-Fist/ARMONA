@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -15,30 +17,30 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
 import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
 import com.arfist.armona.MainActivity.Companion.permissionList
+import com.arfist.armona.Quaternion
 import com.arfist.armona.R
+import com.arfist.armona.RadToDeg
 import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.utils.hasPermission
 import com.arfist.armona.services.Direction
+import com.arfist.armona.services.LocationRepository
+import com.arfist.armona.services.LowestMetres
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
 import timber.log.Timber
+import kotlin.math.PI
 
 class MapFragment : Fragment() {
 
+    // Init
     private lateinit var binding: MapFragmentBinding
-
-    private lateinit var googleMap: GoogleMap
-
+    private var googleMap: GoogleMap? = null
     private val mapViewModel: MapViewModel by activityViewModels()
-
     private var isPermissionGranted = false
-
     private var direction: Direction? = null
-
     private var followLocation = false
 
     companion object {
@@ -82,8 +84,8 @@ class MapFragment : Fragment() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-            else if(followLocation && ::googleMap.isInitialized){
-                googleMap.moveCamera(
+            else if(followLocation && googleMap != null){
+                googleMap!!.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
                         LatLng(location.latitude, location.longitude),
                         DEFAULT_ZOOM.toFloat()
@@ -92,7 +94,7 @@ class MapFragment : Fragment() {
         })
 
         mapViewModel.permissionGranted.observe(viewLifecycleOwner, {
-            if(it && ::googleMap.isInitialized) {
+            if(it) {
                 isPermissionGranted = true
                 updateGoogleMapsUI()
             } else if(!it) {
@@ -101,10 +103,11 @@ class MapFragment : Fragment() {
         })
 
         mapViewModel.direction.observe(viewLifecycleOwner, {
-            if(::googleMap.isInitialized) {
-                direction = it
-                drawPolyline()
-            }
+//            if(::googleMap.isInitialized) {
+//                direction = it
+//                drawPolyline()
+//            }
+            direction = it
         })
 
         mapViewModel.followLocation.observe(viewLifecycleOwner, {
@@ -154,14 +157,15 @@ class MapFragment : Fragment() {
     // Update google map
     private fun updateGoogleMapsUI() {
         Timber.i("updateGoogleUI")
+        if (googleMap == null) return
         try {
             if (isPermissionGranted) {
-                googleMap.isMyLocationEnabled = true
-                googleMap.uiSettings?.isMyLocationButtonEnabled = true
+                googleMap!!.isMyLocationEnabled = true
+                googleMap!!.uiSettings?.isMyLocationButtonEnabled = true
                 drawPolyline()
             } else {
-                googleMap.isMyLocationEnabled = false
-                googleMap.uiSettings?.isMyLocationButtonEnabled = false
+                googleMap!!.isMyLocationEnabled = false
+                googleMap!!.uiSettings?.isMyLocationButtonEnabled = false
                 getPermission()
             }
         } catch (e: SecurityException) {
@@ -172,6 +176,7 @@ class MapFragment : Fragment() {
         }
     }
 
+    val arrowLength = 50.0
     // Draw direction on map
     private fun drawPolyline() {
         Timber.i("Draw polyline")
@@ -181,11 +186,20 @@ class MapFragment : Fragment() {
         }
 
         for (path in paths) {
-            googleMap.addPolyline(PolylineOptions()
+            googleMap!!.addPolyline(PolylineOptions()
                 .clickable(false)
                 .addAll(path)
                 .color(Color.GREEN)
             )
+            for (point in path) {
+                googleMap!!.addCircle(
+                    CircleOptions()
+                        .center(point)
+                        .radius(LowestMetres)
+                        .strokeColor(Color.BLUE)
+                        .strokeWidth(2.0f)
+                )
+            }
         }
     }
 

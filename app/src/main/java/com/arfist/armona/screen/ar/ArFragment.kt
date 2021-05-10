@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
+import android.graphics.Color
+import android.hardware.SensorEvent
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -41,11 +44,15 @@ import kotlin.math.ceil
 
 @SuppressLint("UnsafeExperimentalUsageError")
 class ArFragment : Fragment() {
+
     private lateinit var viewModel: ArViewModel
     private val mapViewModel: MapViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
     private var executors = Array(2){ Executors.newSingleThreadExecutor() }
     private var roadDetectionSvc: RoadDetectionService? = null
+
+    // Sensor: Axis convention https://developer.android.com/reference/android/hardware/SensorEvent#values
+    private lateinit var sensorManager: SensorManager
 
     companion object {
         private const val TAG = "CameraXBasic"
@@ -112,6 +119,8 @@ class ArFragment : Fragment() {
         try {
             // Unbind use cases before rebinding
             cameraProvider.unbindAll()
+
+//            Timber.i(cameraProvider.)
 
             // Bind use cases to camera
             cameraProvider.bindToLifecycle(this, cameraSelector, roadDetectionUseCase, liveCamViewUseCase)
@@ -191,6 +200,8 @@ class ArFragment : Fragment() {
         Timber.i("onViewCreated")
 
         viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        viewModel.registerSensors()
 
         binding.arViewModel = viewModel
         binding.buttonArMap.setOnClickListener { mView: View ->
@@ -227,6 +238,7 @@ class ArFragment : Fragment() {
     override fun onStop() {
         Timber.i("onStop")
         super.onStop()
+        viewModel.unregisterSensors()
     }
 
     override fun onDestroyView() {

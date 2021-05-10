@@ -8,5 +8,6 @@
     <string name="label_ar">Augment reality</string>
     <string name="label_map">Map</string>
     <string name="switch_button">button to switch between view</string>
+    <string name="testPlaceholder">testtest</string>
     <string name="textview">TextView</string>
 </resources>
