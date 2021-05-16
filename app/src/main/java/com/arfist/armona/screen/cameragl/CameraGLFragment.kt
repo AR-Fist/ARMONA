@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.camera.core.*
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
+import com.arfist.armona.utils.ModelLoader
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import com.arfist.armona.screen.cameragl.REQUEST_CODE_PERMISSIONS as REQUEST_CODE_PERMISSIONS1

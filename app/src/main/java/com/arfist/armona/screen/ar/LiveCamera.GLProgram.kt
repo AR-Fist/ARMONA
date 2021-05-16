@@ -12,6 +12,7 @@ class LiveCameraView(val screenRatio: Float) {
 
     var cameraViewBitmap: Bitmap = Bitmap.createBitmap(intArrayOf(0,0,0), 1,1, Bitmap.Config.ARGB_8888)
     set(value) {
+        useProgram()
         if (field.width != value.width || field.height != value.height)
             fitTextureCoord(Size(value.width, value.height))
         field = value;
@@ -34,17 +35,25 @@ class LiveCameraView(val screenRatio: Float) {
     private val fragmentShaderCode =
         """
             precision mediump float;
-            uniform vec4 vColor;
             uniform sampler2D u_Texture;
             
             varying vec2 v_TexCoord;
             
             void main() {
-                gl_FragColor = vec4(texture2D(u_Texture, v_TexCoord).rgb, 0.75);
+                gl_FragColor = vec4(texture2D(u_Texture, v_TexCoord).rgb, 0.9);
             }
         """
 
     private val COORDS_PER_VERTEX = 2
+    private val aTexCoord: Int by lazy {
+        attrib("texCoord")
+    }
+    private val aVPosition: Int by lazy {
+        attrib("vPosition")
+    }
+    private val uU_Texture: Int by lazy {
+        uniform("u_Texture")
+    }
 
 
     private val coords = floatArrayOf(
@@ -116,7 +125,6 @@ class LiveCameraView(val screenRatio: Float) {
     private val textureStride: Int = vertexStride // 4 bytes per vertex
 
     private val mProgram: Int
-    private val vPositionGLLocation: Int
 
     private fun loadShader(type: Int, shaderCode: String): Int {
 
@@ -161,24 +169,24 @@ class LiveCameraView(val screenRatio: Float) {
             throw RuntimeException("Could not link program: ${GLES20.glGetProgramInfoLog(mProgram)}")
 
         Timber.i("Created LiveCamView program with ID = $mProgram")
-        GLES20.glUseProgram(mProgram)
+        useProgram()
         GLES20.glGenBuffers(3, vertexAndElementBuffer);
         Timber.i("Created LiveCamView's buffer = {${vertexAndElementBuffer[0]}, ${vertexAndElementBuffer[1]}, ${vertexAndElementBuffer[2]}}")
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vertexAndElementBuffer[0]);
         GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer.capacity() * 2, indicesBuffer, GLES20.GL_STATIC_DRAW)
 
-        vPositionGLLocation = GLES20.glGetAttribLocation(mProgram, "vPosition").also {
+        aVPosition.run {
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[1]);
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexBuffer.capacity() * 4, vertexBuffer, GLES20.GL_STATIC_DRAW)
 
             // Enable a handle to the triangle vertices
-            GLES20.glEnableVertexAttribArray(it)
+            GLES20.glEnableVertexAttribArray(this)
 
             // Prepare the triangle coordinate data
             GLES20.glVertexAttribPointer(
-                it,
+                this,
                 COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT,
                 false,
@@ -189,7 +197,7 @@ class LiveCameraView(val screenRatio: Float) {
 
         loadTexture()
 
-        GLES20.glGetUniformLocation(mProgram, "u_Texture").run {
+        uU_Texture.run {
             GLES20.glUniform1i(this, 0)
         }
     }
@@ -206,7 +214,6 @@ class LiveCameraView(val screenRatio: Float) {
     }
 
     private fun reloadTexture(){
-        GLES20.glUseProgram(mProgram)
         GLES20.glDeleteTextures(1, texture)
         GLES20.glGenTextures(1, texture);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0])
@@ -240,7 +247,7 @@ class LiveCameraView(val screenRatio: Float) {
             position(0)
         }
 
-        GLES20.glGetAttribLocation(mProgram, "texCoord").run {
+        aTexCoord.run {
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[2]);
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, textureBuffer.capacity() * 4, textureBuffer, GLES20.GL_STATIC_DRAW)
@@ -258,20 +265,24 @@ class LiveCameraView(val screenRatio: Float) {
                 0
             )
         }
+        Timber.d("BG Frame bound is updated, ${1 - compoundFactor} error: ${GLES20.glGetError()}")
     }
 
     fun draw() {
         // Add program to OpenGL ES environment
-        GLES20.glUseProgram(mProgram)
+        useProgram()
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture[0]);
 
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, vertexAndElementBuffer[0]);
+        GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer.capacity() * 2, indicesBuffer, GLES20.GL_STATIC_DRAW)
+
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[1]);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexBuffer.capacity() * 4, vertexBuffer, GLES20.GL_STATIC_DRAW)
 
         GLES20.glVertexAttribPointer(
-            vPositionGLLocation,
+            aVPosition,
             COORDS_PER_VERTEX,
             GLES20.GL_FLOAT,
             false,
@@ -279,7 +290,23 @@ class LiveCameraView(val screenRatio: Float) {
             0
         )
 
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexAndElementBuffer[2]);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, textureBuffer.capacity() * 4, textureBuffer, GLES20.GL_STATIC_DRAW)
+
+        GLES20.glVertexAttribPointer(
+            aTexCoord,
+            COORDS_PER_VERTEX,
+            GLES20.GL_FLOAT,
+            false,
+            textureStride,
+            0
+        )
+
         // Draw the triangle
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices.size, GLES20.GL_UNSIGNED_SHORT, 0)
     }
+
+    fun useProgram() = GLES20.glUseProgram(mProgram)
+    private fun uniform(name: String) = GLES20.glGetUniformLocation(mProgram, name)
+    private fun attrib(name: String) = GLES20.glGetAttribLocation(mProgram, name)
 }

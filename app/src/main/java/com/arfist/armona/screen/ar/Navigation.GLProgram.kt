@@ -4,7 +4,7 @@ import android.opengl.GLES20
 import timber.log.Timber
 import java.nio.*
 
-class NavigationView {
+class Navigation {
 
     private val vertexShaderCode =
         """
@@ -121,7 +121,6 @@ class NavigationView {
     // endregion
 
     init {
-
         // region Duplicated code from LiveCameraView 2
         val vertexShader: Int = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode)
         val fragmentShader: Int = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode)

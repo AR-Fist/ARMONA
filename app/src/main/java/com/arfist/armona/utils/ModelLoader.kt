@@ -1,4 +1,4 @@
-package com.arfist.armona.screen.cameragl
+package com.arfist.armona.utils
 
 import android.annotation.SuppressLint
 import android.content.res.AssetManager
