@@ -9,6 +9,7 @@ import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.IntBuffer
+import kotlin.math.sqrt
 import kotlin.properties.Delegates
 
 private val vertexShaderCode = """
@@ -59,6 +60,25 @@ private val fragmentShaderCode = """
     }
 """.trimIndent()
 
+fun quanternionToRotationMatrix(quanternion: FloatArray): FloatArray {
+    // https://stackoverflow.com/questions/1556260/convert-quaternion-rotation-to-rotation-matrix
+    var qx = quanternion[0]
+    var qy = quanternion[1]
+    var qz = quanternion[2]
+    var qw = quanternion[3]
+    var n = 1.0f / sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
+    qx *= n;
+    qy *= n;
+    qz *= n;
+    qw *= n;
+    // TODO might need transpose ?
+    return floatArrayOf(
+        1.0f - 2.0f*qy*qy - 2.0f*qz*qz, 2.0f*qx*qy - 2.0f*qz*qw, 2.0f*qx*qz + 2.0f*qy*qw, 0.0f,
+        2.0f*qx*qy + 2.0f*qz*qw, 1.0f - 2.0f*qx*qx - 2.0f*qz*qz, 2.0f*qy*qz - 2.0f*qx*qw, 0.0f,
+        2.0f*qx*qz - 2.0f*qy*qw, 2.0f*qy*qz + 2.0f*qx*qw, 1.0f - 2.0f*qx*qx - 2.0f*qy*qy, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 private fun toBuffer(fa: FloatArray) = ByteBuffer
     .allocateDirect(fa.size * 4)
     .order(ByteOrder.nativeOrder())
@@ -69,7 +89,7 @@ private fun toBuffer(fa: FloatArray) = ByteBuffer
     }
 
 /** reactive update matrix every frame **/
-private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
+private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
         // last transform
@@ -81,6 +101,23 @@ private fun calculateModelMatrix(matrix: FloatArray, degree: Float) {
         // first transform
     }
 }
+
+private fun calculateModelMatrixFromQuanternion(matrix: FloatArray, quanternion: FloatArray) {
+    matrix.apply {
+        Matrix.setIdentityM(this, 0) // think in reverse order
+        // last transform
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f) // change arrow position
+
+        // TODO check if login work
+        Matrix.multiplyMM(this, 0, this.copyOf(), 0, quanternionToRotationMatrix(quanternion), 0);
+
+        Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
+        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
+        Matrix.scaleM(this, 0, .4f, .4f, .4f)
+        // first transform
+    }
+}
+
 private fun calculateProjectionMatrix(matrix: FloatArray, fovy: Float) {
     Matrix.perspectiveM(matrix, 0, fovy, 1f / 1f, 0f, 10f)
 }
@@ -101,13 +138,19 @@ class ArrowGLProgram(arrowModel: ModelLoader.MeshGroup) {
 
     var rotation = 0f
     set(value) {
-        calculateModelMatrix(model_matrix, value)
+        calculateModelMatrixFromDegree(model_matrix, value)
+        field = value
+    }
+
+    var quaternion = floatArrayOf(0f, 1f, 0f, 0f)
+    set(value) {
+        calculateModelMatrixFromQuanternion(model_matrix, value)
         field = value
     }
 
 
     val model_matrix = FloatArray(16).apply {
-        calculateModelMatrix(
+        calculateModelMatrixFromDegree(
             this,
             rotation
         )

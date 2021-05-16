@@ -2,6 +2,7 @@ package com.arfist.armona.screen.ar
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.graphics.Bitmap
 import android.hardware.SensorManager
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -9,6 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.arfist.armona.*
 import com.arfist.armona.services.*
+import com.arfist.armona.utils.ModelLoader
 import koma.create
 import koma.extensions.get
 import koma.extensions.set
@@ -18,6 +20,39 @@ import timber.log.Timber
 import kotlin.math.*
 
 class ArViewModel(application: Application) : AndroidViewModel(application) {
+    class ArrowModel {
+        var arrowRotation = 0f // use if rotationMode = RotationMode.EULER
+        var arrowModel: ModelLoader.MeshGroup? = null
+        var arrowFovy = 30f
+        var arrowQuaternion = floatArrayOf(0f, 1f, 0f, 0f) // use if rotationMode = RotationMode.QUATERNION
+
+        private val _roadLine = MutableLiveData<Array<org.opencv.core.Point>>()
+        val roadLine: LiveData<Array<org.opencv.core.Point>>
+        get() = _roadLine
+
+        fun updateRoadLine(vertices: Array<android.graphics.Point>, frame: android.graphics.Point){
+            val middleX = frame.x / 2.0
+            val middleY = frame.y / 2.0
+            _roadLine.value = vertices.map { v -> org.opencv.core.Point( (middleX - v.x) / middleX, (middleY - v.y) / middleY) }.toTypedArray()
+        }
+    }
+    val arrowModel = ArrowModel()
+
+    class ScreenModel {
+        var screenRatio = 0.0f
+    }
+    val screenModel = ScreenModel()
+
+    class CameraModel {
+        private val _liveViewBitmap = MutableLiveData<Bitmap>()
+        val liveViewBitmap: LiveData<Bitmap>
+            get() = _liveViewBitmap
+
+        fun setLiveViewBitmap(bitmap: Bitmap) {
+            _liveViewBitmap.value = bitmap
+        }
+    }
+    val cameraModel = CameraModel()
 
     // Repository
     private val sensorsRepository = SensorsRepository.getInstance(application.applicationContext)

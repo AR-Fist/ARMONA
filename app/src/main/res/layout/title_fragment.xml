@@ -8,6 +8,9 @@
         <variable
             name="titleViewModel"
             type="com.arfist.armona.screen.title.TitleViewModel" />
+        <variable
+            name="sharedViewModel"
+            type="com.arfist.armona.shared.SharedViewModel" />
     </data>
 
     <LinearLayout
@@ -46,33 +49,13 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="16sp"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/text_destination"
-                android:layout_width="@dimen/search_box_width"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ems="10"
-                android:hint="@string/hint_destination"
-                android:importantForAutofill="no"
-                android:inputType="textPersonName"
-                android:textSize="12sp" />
-
-            <ImageView
-                android:id="@+id/imageView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:contentDescription="@string/text_description_search_icon"
-                android:src="@android:drawable/ic_menu_search" />
-
-        </LinearLayout>
+            android:orientation="horizontal"/>
 
         <Button
             android:id="@+id/button_ar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:enabled="@{sharedViewModel.direction != null}"
             android:text="@string/show_ar_text"
             app:cornerRadius="@dimen/button_corner_radius" />
 

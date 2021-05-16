@@ -16,10 +16,8 @@ import com.arfist.armona.MainActivity.Companion.permissionList
 import com.arfist.armona.R
 import com.arfist.armona.databinding.TitleFragmentBinding
 import com.arfist.armona.utils.hasPermission
-import com.arfist.armona.screen.map.MapFragment
-import com.arfist.armona.screen.map.MapViewModel
+import com.arfist.armona.shared.SharedViewModel
 import com.google.android.gms.common.api.Status
-import com.google.android.libraries.places.api.model.LocationBias
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
@@ -28,7 +26,7 @@ import timber.log.Timber
 class TitleFragment : Fragment() {
 
     private lateinit var viewModel: TitleViewModel
-    private val mapViewModel: MapViewModel by activityViewModels()
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var binding: TitleFragmentBinding
 
     override fun onCreateView(
@@ -39,8 +37,6 @@ class TitleFragment : Fragment() {
 
         // Inflate view and instance of binding
         binding = DataBindingUtil.inflate(inflater, R.layout.title_fragment, container, false)
-
-        getPermission()
         initAutoCompleteFragment()
         return binding.root
     }
@@ -54,6 +50,7 @@ class TitleFragment : Fragment() {
 
         // Set listener
         binding.titleViewModel = viewModel
+        binding.sharedViewModel = sharedViewModel
 
         binding.buttonAr.setOnClickListener { mView : View ->
             mView.findNavController().navigate(TitleFragmentDirections.actionTitleFragmentToArFragment())
@@ -61,6 +58,7 @@ class TitleFragment : Fragment() {
         binding.buttonMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(TitleFragmentDirections.actionTitleFragmentToMapFragment())
         }
+        binding.lifecycleOwner = viewLifecycleOwner
 
     }
 
@@ -85,51 +83,13 @@ class TitleFragment : Fragment() {
         autocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
                 Timber.i(place.name)
-                mapViewModel.setDestination(place.name!!)
+                sharedViewModel.setDestination(place.name!!)
             }
 
             override fun onError(status: Status) {
                 Timber.e(status.statusMessage)
             }
         })
-    }
-
-    // Check which permission is not granted, then ask for it
-    private fun getPermission() {
-        Timber.i("Grant permission")
-
-        val permissionRequest: MutableList<String> = ArrayList()
-        for (permission in permissionList) {
-            if (!requireContext().hasPermission(permission)) {
-                permissionRequest.add(permission)
-            }
-        }
-        if (permissionRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                permissionRequest.toTypedArray(), PERMISSION_REQUEST_MAP
-            )
-        } else {
-            mapViewModel.onPermissionGranted()
-        }
-    }
-
-    // Callback when permission requested
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSION_REQUEST_MAP -> {
-                if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                    mapViewModel.onPermissionGranted()
-                } else {
-                    mapViewModel.onPermissionDenied()
-                }
-            }
-        }
     }
 
 }

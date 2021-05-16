@@ -8,13 +8,17 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.lifecycleScope
+import com.arfist.armona.shared.SharedViewModel
 import timber.log.Timber
 import com.arfist.armona.utils.ModelLoader
 
 @RequiresApi(Build.VERSION_CODES.P)
 class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView(context, attrs) {
 
-    private lateinit var glRenderer: GLRenderer
+    lateinit var glRenderer: GLRenderer
+    private set;
+
     val activity: FragmentActivity by lazy {
         try {
             context as FragmentActivity
@@ -23,6 +27,7 @@ class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView
         }
     }
     private var arViewModel = ViewModelProviders.of(activity).get(ArViewModel::class.java)
+    private var sharedViewModel = ViewModelProviders.of(activity).get(SharedViewModel::class.java)
 
     init {
         // Create an OpenGL ES 2.0 context
@@ -40,26 +45,12 @@ class GLView(context: Context, attrs: android.util.AttributeSet) : GLSurfaceView
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         arViewModel.screenModel.screenRatio = width.toFloat() / height
-        glRenderer = GLRenderer(arViewModel)
-        setRenderer(glRenderer)
+        if (!this::glRenderer.isInitialized){
+            glRenderer = GLRenderer(arViewModel)
+            setRenderer(glRenderer)
+        }
         preserveEGLContextOnPause = true
         renderMode = RENDERMODE_CONTINUOUSLY
-    }
 
-    fun streamCameraView(bitmap: Bitmap) {
-        queueEvent {
-            glRenderer.updateCameraViewBitmap(bitmap)
-            requestRender()
-        }
-    }
-
-    fun updateRoadLine(vertices: Array<android.graphics.Point>, frame: android.graphics.Point){
-        Timber.i("updateRoadLine: $vertices, $frame")
-        queueEvent{
-            val middleX = frame.x / 2.0
-            val middleY = frame.y / 2.0
-            glRenderer.updateRoadLine(vertices.map { v -> org.opencv.core.Point( (middleX - v.x) / middleX, (middleY - v.y) / middleY) }.toTypedArray())
-            requestRender()
-        }
     }
 }

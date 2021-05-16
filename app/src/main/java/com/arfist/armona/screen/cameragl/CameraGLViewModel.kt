@@ -2,6 +2,7 @@ package com.arfist.armona.screen.cameragl
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
+import com.arfist.armona.utils.ModelLoader
 
 class CameraGLViewModel: ViewModel() {
     var arrowRotation = 0f // use if rotationMode = RotationMode.EULER

@@ -4,11 +4,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -17,28 +15,25 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
 import com.arfist.armona.MainActivity.Companion.PERMISSION_REQUEST_MAP
 import com.arfist.armona.MainActivity.Companion.permissionList
-import com.arfist.armona.Quaternion
 import com.arfist.armona.R
-import com.arfist.armona.RadToDeg
 import com.arfist.armona.databinding.MapFragmentBinding
 import com.arfist.armona.utils.hasPermission
 import com.arfist.armona.services.Direction
-import com.arfist.armona.services.LocationRepository
 import com.arfist.armona.services.LowestMetres
+import com.arfist.armona.shared.SharedViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
 import timber.log.Timber
-import kotlin.math.PI
 
 class MapFragment : Fragment() {
 
     // Init
     private lateinit var binding: MapFragmentBinding
     private var googleMap: GoogleMap? = null
-    private val mapViewModel: MapViewModel by activityViewModels()
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private var isPermissionGranted = false
     private var direction: Direction? = null
     private var followLocation = false
@@ -76,7 +71,7 @@ class MapFragment : Fragment() {
                 .navigate(MapFragmentDirections.actionMapFragmentToArFragment())
         }
 
-        mapViewModel.lastLocation.observe(viewLifecycleOwner, { location ->
+        sharedViewModel.lastLocation.observe(viewLifecycleOwner, { location ->
             if (location == null) {
                 Toast.makeText(
                     requireContext(),
@@ -93,16 +88,9 @@ class MapFragment : Fragment() {
             }
         })
 
-        mapViewModel.permissionGranted.observe(viewLifecycleOwner, {
-            if(it) {
-                isPermissionGranted = true
-                updateGoogleMapsUI()
-            } else if(!it) {
-                getPermission()
-            }
-        })
 
-        mapViewModel.direction.observe(viewLifecycleOwner, {
+
+        sharedViewModel.direction.observe(viewLifecycleOwner, {
 //            if(::googleMap.isInitialized) {
 //                direction = it
 //                drawPolyline()
@@ -110,7 +98,7 @@ class MapFragment : Fragment() {
             direction = it
         })
 
-        mapViewModel.followLocation.observe(viewLifecycleOwner, {
+        sharedViewModel.followLocation.observe(viewLifecycleOwner, {
             followLocation = it
         })
 
@@ -132,7 +120,7 @@ class MapFragment : Fragment() {
                 permissionRequest.toTypedArray(), PERMISSION_REQUEST_MAP
             )
         } else {
-            mapViewModel.onPermissionGranted()
+            sharedViewModel.onPermissionGranted()
         }
     }
 
@@ -146,9 +134,9 @@ class MapFragment : Fragment() {
         when (requestCode) {
             PERMISSION_REQUEST_MAP -> {
                 if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                    mapViewModel.onPermissionGranted()
+                    sharedViewModel.onPermissionGranted()
                 } else {
-                    mapViewModel.onPermissionDenied()
+                    sharedViewModel.onPermissionDenied()
                 }
             }
         }

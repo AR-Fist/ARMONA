@@ -6,8 +6,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
-import android.graphics.Color
-import android.hardware.SensorEvent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
@@ -20,7 +18,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.findNavController
 import com.arfist.armona.R
 import com.arfist.armona.databinding.ArFragmentBinding
-import com.arfist.armona.screen.map.MapViewModel
+import com.arfist.armona.shared.SharedViewModel
 import timber.log.Timber
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.CameraSelector
@@ -32,7 +30,6 @@ import org.opencv.android.Utils
 import org.opencv.imgproc.Imgproc
 import java.util.concurrent.Executors
 import android.os.Build
-import android.util.Rational
 import androidx.annotation.RequiresApi
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
@@ -40,13 +37,15 @@ import org.opencv.core.Point
 import com.arfist.armona.utils.toBitmap
 import android.util.Size
 import android.widget.ImageView
+import kotlinx.android.synthetic.main.activity_cameragl.view.*
+import kotlinx.android.synthetic.main.ar_fragment.view.*
 import kotlin.math.ceil
 
 @SuppressLint("UnsafeExperimentalUsageError")
 class ArFragment : Fragment() {
 
     private lateinit var viewModel: ArViewModel
-    private val mapViewModel: MapViewModel by activityViewModels()
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var binding: ArFragmentBinding
     private var executors = Array(2){ Executors.newSingleThreadExecutor() }
     private var roadDetectionSvc: RoadDetectionService? = null
@@ -54,16 +53,11 @@ class ArFragment : Fragment() {
     // Sensor: Axis convention https://developer.android.com/reference/android/hardware/SensorEvent#values
     private lateinit var sensorManager: SensorManager
 
+    private lateinit var glController: GLController
+
     companion object {
         private const val TAG = "CameraXBasic"
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
-
-    private fun allRequiredPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
-    }
-
     @RequiresApi(Build.VERSION_CODES.P)
     @androidx.camera.core.ExperimentalGetImage()
     override fun onCreateView(
@@ -72,11 +66,7 @@ class ArFragment : Fragment() {
     ): View {
         Timber.i("onCreateView")
 
-        if (this.allRequiredPermissionsGranted()){
-            setupCam(container!!)
-        }else{
-            ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-        }
+        setupCam(container!!)
 
         // init OpenCV
         if(OpenCVLoader.initDebug()) {
@@ -86,7 +76,13 @@ class ArFragment : Fragment() {
             Log.e("OpenCV", "Load fail")
         }
 
+        viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
+        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
+            viewModel.calculateArrowRotation()
+        })
+
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
+
         return binding.root
     }
 
@@ -109,7 +105,8 @@ class ArFragment : Fragment() {
             .also {
                 it.setAnalyzer(
                     executors[1],
-                    {imageProxy -> liveCamView(imageProxy, container)},
+                    {imageProxy -> liveCamView(imageProxy)
+                    },
                 )
             }
 
@@ -131,10 +128,11 @@ class ArFragment : Fragment() {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun liveCamView(imageproxy: ImageProxy, container: ViewGroup){
-        var glview = container.findViewById<GLView>(R.id.gl_view)
-        glview.streamCameraView(imageproxy.image!!.toBitmap())
-        imageproxy.close()
+    private fun liveCamView(imageproxy: ImageProxy){
+        requireActivity().runOnUiThread {
+            viewModel.cameraModel.setLiveViewBitmap(imageproxy.image!!.toBitmap())
+            imageproxy.close()
+        }
     }
 
 
@@ -170,24 +168,24 @@ class ArFragment : Fragment() {
         //Drawing lines on an image
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
-        var glview = container.findViewById<GLView>(R.id.gl_view)
-        glview.updateRoadLine(
-                resultLines.fold(ArrayList<android.graphics.Point>())
-                {
-                    arr, side ->
-                    arrayOf(1, 0).fold(arr)
-                    { a, i ->
-                        a.add(android.graphics.Point(side[i * 2 + 1], side[i * 2])); a
-                    }
-                }.toTypedArray(),
-            android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
-        )
 
         val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(rgba, newImage)
 //        val resultBitmap = img?.copy(Bitmap.Config.RGB_565, true)
 
         requireActivity().runOnUiThread {
+
+            viewModel.arrowModel.updateRoadLine(
+                resultLines.fold(ArrayList<android.graphics.Point>())
+                { arr, side ->
+                    arrayOf(1, 0).fold(arr)
+                    { a, i ->
+                        a.add(android.graphics.Point(side[i * 2 + 1], side[i * 2])); a
+                    }
+                }.toTypedArray(),
+                android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
+            )
+
             var imgview = container.findViewById<ImageView>(R.id.image_view)
             imgview.setImageBitmap(newImage)
         }
@@ -199,7 +197,6 @@ class ArFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Timber.i("onViewCreated")
 
-        viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         viewModel.registerSensors()
 
@@ -207,6 +204,8 @@ class ArFragment : Fragment() {
         binding.buttonArMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
+
+        glController = GLController(viewModel, viewLifecycleOwner, requireView().gl_view)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {

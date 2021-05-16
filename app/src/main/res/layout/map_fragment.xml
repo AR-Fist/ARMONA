@@ -6,7 +6,7 @@
     <data>
         <variable
             name="mapViewModel"
-            type="com.arfist.armona.screen.map.MapViewModel" />
+            type="com.arfist.armona.shared.SharedViewModel" />
         <variable
             name="ArViewModel"
             type="com.arfist.armona.screen.ar.ArViewModel" />

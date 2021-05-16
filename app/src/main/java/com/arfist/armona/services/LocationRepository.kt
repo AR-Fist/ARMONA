@@ -64,11 +64,15 @@ class LocationRepository private constructor(context: Context){
         get() = _currentLocation
 
 
+    val HardCodedLocation = "13.739712414289736,100.53311438774314"
+
     var destination: String = ""
     set(value) {
         field = value
         runBlocking {
-            setDirection(getDirection(currentLocation.value!!.getStringFormat(), value))
+            Timber.i("Fetching direction")
+            setDirection(getDirection(currentLocation.value?.getStringFormat() ?: HardCodedLocation, value))
+            Timber.i("Direction fetching completed.")
         }
     }
 

@@ -32,6 +32,7 @@ class Navigation {
         0.5f, -1f,
     )
     set(value) {
+        Timber.i("Hi, ")
         if (value.size != field.size)
             throw RuntimeException("Try to set roadVertexCoords with difference size = ${value.size}")
         field = value

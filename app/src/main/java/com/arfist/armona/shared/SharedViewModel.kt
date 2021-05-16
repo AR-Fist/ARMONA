@@ -1,21 +1,13 @@
-package com.arfist.armona.screen.map
+package com.arfist.armona.shared
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import com.arfist.armona.utils.getStringFormat
-import com.arfist.armona.services.Direction
-import com.arfist.armona.getStringFormat
 import com.arfist.armona.services.LocationRepository
-import com.arfist.armona.services.LowestMetres
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.SphericalUtil
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class MapViewModel(application: Application) :AndroidViewModel(application){
+class SharedViewModel(application: Application) :AndroidViewModel(application){
 
     private val locationRepository = LocationRepository.getInstance(application.applicationContext)
 
@@ -52,21 +44,6 @@ class MapViewModel(application: Application) :AndroidViewModel(application){
     fun setDestination(destination: String){
         locationRepository.destination = destination
     }
-
-//    fun getDirection(destination: String) {
-//        Timber.i("Get direction: ${lastLocation.value?.getStringFormat()}, ${destination}.")
-//        viewModelScope.launch {
-//            try {
-//                lastLocation.value?.let {
-//                    locationRepository.getDirection(
-//                        it.getStringFormat(), destination)
-//                }?.let { locationRepository.setDirection(it) }
-//                Timber.i("get direction success")
-//            } catch (e: Exception) {
-//                Timber.e(e)
-//            }
-//        }
-//    }
 
     fun getOffsetDirection() = locationRepository.calculateOffsetDirectionLocation()
     fun getOffsetNorth() = locationRepository.calculateOffsetNorthLocation()
