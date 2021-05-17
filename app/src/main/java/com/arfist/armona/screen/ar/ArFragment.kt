@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
 import android.graphics.Color
-import android.hardware.SensorEvent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
