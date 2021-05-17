@@ -40,6 +40,20 @@ fun FloatArray.toDouble() : DoubleArray {
     }
     return result
 }
+fun FloatArray.RadtoDeg() : FloatArray {
+    val result = FloatArray(this.size)
+    for (i in 0..2){
+        result[i] = this[i].RadToDeg()
+    }
+    return result
+}
+fun FloatArray.DegtoRad() : FloatArray {
+    val result = FloatArray(this.size)
+    for (i in 0..2){
+        result[i] = this[i].DegToRad()
+    }
+    return result
+}
 
 fun Float.DegToRad(): Float {
     return (this*PI/180).toFloat()
@@ -307,34 +321,16 @@ class Quaternion(
         // Euler angles as yaw, pitch, roll
         // from wiki: Conversion between quaternion and euler
         val euler = FloatArray(3)
-        val srcp = 2*(this.w*this.x+this.y*this.z)
-        val crcp = 1 - 2*(this.x*this.x+this.y*this.y)
+        val srcp = 2*((this.w*this.x)+(this.y*this.z))
+        val crcp = 1 - 2*((this.x*this.x)+(this.y*this.y))
         euler[2] = atan2(srcp, crcp)
 
-        val sp = 2*(this.w*this.y-this.z*this.x)
+        val sp = 2*((this.w*this.y)-(this.z*this.x))
 
         euler[1] = if(abs(sp) >= 1 ) (PI/2 * sp.sign).toFloat() else asin(sp)
 
-        val sycp = 2*(this.w*this.z+this.x*this.y)
-        val cycp = 1 - 2*(this.y*this.y+this.z*this.z)
-        euler[0] = atan2(sycp, cycp)
-        return euler
-    }
-
-    fun toEuler3(): FloatArray {
-        // Euler angles as yaw, pitch, roll
-        // from wiki: Conversion between quaternion and euler
-        val euler = FloatArray(3)
-        val srcp = 2*(this.w*this.x+this.y*this.z)
-        val crcp = 1 - 2*(this.x*this.x+this.y*this.y)
-        euler[2] = atan2(srcp, crcp)
-
-        val sp = 2*(this.w*this.y-this.z*this.x)
-
-        euler[1] = if(abs(sp) >= 1 ) (PI/2 * sp.sign).toFloat() else asin(sp)
-
-        val sycp = 2*(this.w*this.z+this.x*this.y)
-        val cycp = 1 - 2*(this.y*this.y+this.z*this.z)
+        val sycp = 2*((this.w*this.z)+(this.x*this.y))
+        val cycp = 1 - 2*((this.y*this.y)+(this.z*this.z))
         euler[0] = atan2(sycp, cycp)
         return euler
     }

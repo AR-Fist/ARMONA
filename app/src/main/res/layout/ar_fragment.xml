@@ -29,12 +29,89 @@
                     android:title="RotationVector"
                     tools:ignore="HardcodedText" />
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/RotVecYaw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/RotVecPitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toStartOf="@+id/RotVecRoll"
+                        app:layout_constraintStart_toEndOf="@+id/RotVecYaw"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/RotVecRoll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphGGOrient"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
                     android:title="Google orientation"
                     tools:ignore="HardcodedText" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+
+                    <TextView
+                        android:id="@+id/GGOYaw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/GGOPitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toStartOf="@+id/GGORoll"
+                        app:layout_constraintStart_toEndOf="@+id/GGOYaw"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/GGORoll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphComplementary"
@@ -43,12 +120,90 @@
                     android:title="ComplementaryFilter"
                     tools:ignore="HardcodedText" />
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                <TextView
+                    android:id="@+id/ComYaw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/ComPitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toStartOf="@+id/ComRoll"
+                    app:layout_constraintStart_toEndOf="@+id/ComYaw"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/ComRoll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphMyOrient"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
                     android:title="ComplementaryFilter"
                     tools:ignore="HardcodedText" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                <TextView
+                    android:id="@+id/MOYaw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/MOPitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toStartOf="@+id/MORoll"
+                    app:layout_constraintStart_toEndOf="@+id/MOYaw"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/MORoll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphKalman"
@@ -57,12 +212,90 @@
                     android:title="Kalmanfilter"
                     tools:ignore="HardcodedText" />
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                    <TextView
+                        android:id="@+id/KalYaw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <TextView
+                        android:id="@+id/KalPitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toStartOf="@+id/KalRoll"
+                        app:layout_constraintStart_toEndOf="@+id/KalYaw"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/KalRoll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/graphArrow"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
                     android:title="Arrow rotation"
                     tools:ignore="HardcodedText" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                    <TextView
+                        android:id="@+id/ArrYaw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <TextView
+                        android:id="@+id/ArrPitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/testPlaceholder"
+                        android:textColor="?android:textColorPrimary"
+                        android:textSize="@dimen/text_size_test"
+                        app:layout_constraintEnd_toStartOf="@+id/ArrRoll"
+                        app:layout_constraintStart_toEndOf="@+id/ArrYaw"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/ArrRoll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/testPlaceholder"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="@dimen/text_size_test"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
         </ScrollView>

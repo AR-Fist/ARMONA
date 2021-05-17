@@ -3,4 +3,5 @@
     <dimen name="search_box_width">218sp</dimen>
     <dimen name="button_corner_radius">12sp</dimen>
     <dimen name="floting_button_margin">30dp</dimen>
+    <dimen name="text_size_test">24sp</dimen>
 </resources>

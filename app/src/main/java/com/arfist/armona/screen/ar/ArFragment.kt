@@ -1,9 +1,7 @@
 package com.arfist.armona.screen.ar
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.hardware.SensorEvent
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
@@ -20,6 +18,7 @@ import com.arfist.armona.Quaternion
 import com.arfist.armona.R
 import com.arfist.armona.databinding.ArFragmentBinding
 import com.arfist.armona.screen.map.MapViewModel
+import com.arfist.armona.RadtoDeg
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.Viewport
 import com.jjoe64.graphview.series.DataPoint
@@ -39,6 +38,8 @@ class ArFragment : Fragment() {
     // Plot
     private val graphs = ArrayList<GraphView>()
     private val series = ArrayList<LineGraphSeries<DataPoint>>()
+
+    private val texts = ArrayList<TextView>()
 
     private val graphSize = 5
     private val dataSize = 3
@@ -74,6 +75,9 @@ class ArFragment : Fragment() {
         initGraphSeries()
         configGraph()
         configSeries()
+
+        initTextViews()
+        starterText()
         //
     }
 
@@ -81,24 +85,30 @@ class ArFragment : Fragment() {
 
         binding.arViewModel!!.mGoogleOrientation.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 0)
+            updateTextView(it.RadtoDeg(), 0)
         })
 
         binding.arViewModel!!.myOrientationAngle.observe(viewLifecycleOwner, {
-            series.appendData(it[3].toDouble(), it, 1)
+            val test = Quaternion.FromEuler(it).toEuler()
+            series.appendData(it[3].toDouble(), test, 1)
+            updateTextView(test.RadtoDeg(), 1)
         })
 
         binding.arViewModel!!.complementaryAngle.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 2)
+            updateTextView(it.RadtoDeg(), 2)
         })
 
         binding.arViewModel!!.extendedKalman.observe(viewLifecycleOwner, {
             series.appendData(it[3].toDouble(), it, 3)
+            updateTextView(it.RadtoDeg(), 3)
         })
 
         binding.arViewModel!!.rotationVector.observe(viewLifecycleOwner, {
             getOrientation(it.timestamp)
             val rotvecang = Quaternion(it.values[3], it.values[0], it.values[1], it.values[2]).toEuler()
             series.appendData(it.timestamp.toDouble(), rotvecang, 4)
+            updateTextView(rotvecang.RadtoDeg(), 4)
         })
     }
 
@@ -162,6 +172,29 @@ class ArFragment : Fragment() {
         viewPort.setMinY(-5.0)
         viewPort.setMaxY(5.0)
     }
+
+    private fun initTextViews() {
+        texts.addAll(arrayOf(requireView().findViewById(R.id.RotVecYaw), requireView().findViewById(R.id.RotVecPitch), requireView().findViewById(R.id.RotVecRoll)))
+        texts.addAll(arrayOf(requireView().findViewById(R.id.GGOYaw), requireView().findViewById(R.id.GGOPitch), requireView().findViewById(R.id.GGORoll)))
+        texts.addAll(arrayOf(requireView().findViewById(R.id.ComYaw), requireView().findViewById(R.id.ComPitch), requireView().findViewById(R.id.ComRoll)))
+        texts.addAll(arrayOf(requireView().findViewById(R.id.MOYaw), requireView().findViewById(R.id.MOPitch), requireView().findViewById(R.id.MORoll)))
+        texts.addAll(arrayOf(requireView().findViewById(R.id.KalYaw), requireView().findViewById(R.id.KalPitch), requireView().findViewById(R.id.KalRoll)))
+        texts.addAll(arrayOf(requireView().findViewById(R.id.ArrYaw), requireView().findViewById(R.id.ArrPitch), requireView().findViewById(R.id.ArrRoll)))
+    }
+
+    private fun updateTextView(values: FloatArray, count: Int) {
+        for (i in 0 until dataSize) {
+            texts[i+(dataSize*count)].text = values[i].toString()
+
+        }
+    }
+
+    private fun starterText() {
+        for (i in 0 until seriesSize) {
+            texts[i].text = "Accessed"
+        }
+    }
+
     //
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
