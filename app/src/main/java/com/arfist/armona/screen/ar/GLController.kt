@@ -31,7 +31,7 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
             }
         })
 
-        viewModel.arrowRotation.observe(lifecycleOwner, {
+        viewModel.arrowRotationSlerp.observe(lifecycleOwner, {
             Timber.i("updateRotation ${it.joinToString()} on $glView")
             try {
                 with(glView!!) {

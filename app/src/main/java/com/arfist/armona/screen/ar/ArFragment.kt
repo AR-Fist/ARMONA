@@ -215,7 +215,6 @@ class ArFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Timber.i("onActivityCreated")
         super.onActivityCreated(savedInstanceState)
-
     }
 
     override fun onStart() {

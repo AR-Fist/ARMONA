@@ -233,7 +233,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
 
         val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
-        arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.1f)
+        arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.05f)
         _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
 
