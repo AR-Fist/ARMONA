@@ -101,6 +101,10 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val arrowRotation: LiveData<FloatArray>
         get() = _arrowRotation
 
+    private val _arrowRotationSlerpQuaternion = MutableLiveData<Quaternion>()
+    val arrowRotationSlerpQuaternion: LiveData<Quaternion>
+        get() = _arrowRotationSlerpQuaternion
+
     private val _arrowRotationSlerp = MutableLiveData<FloatArray>()
     val arrowRotationSlerp: LiveData<FloatArray>
         get() = _arrowRotationSlerp
@@ -220,6 +224,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 //        val arrowRotationLocalNew = arrowRotationWorld*complementaryFilter.rotationQuaternion
         val arrowRotationLocalNew = arrowRotationWorld*extendedKalman.value!!
         arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.05f)
+        _arrowRotationSlerpQuaternion.value = arrowRotationLocal
         _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }

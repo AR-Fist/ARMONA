@@ -31,19 +31,32 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
             }
         })
 
-        viewModel.arrowRotationSlerp.observe(lifecycleOwner, {
-            Timber.i("updateRotation ${it.joinToString()} on $glView")
+//        viewModel.arrowRotationSlerp.observe(lifecycleOwner, {
+//            Timber.i("updateRotation ${it.joinToString()} on $glView")
+//            try {
+//                with(glView!!) {
+//                    queueEvent {
+//                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat() *-1
+//                        requestRender()
+//                    }
+//                }
+//            } catch (e: Exception){
+//                Timber.e(e)
+//            }
+//
+//        })
+
+        viewModel.arrowRotationSlerpQuaternion.observe(lifecycleOwner, {
             try {
                 with(glView!!) {
                     queueEvent {
-                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat() *-1
+                        glRenderer.arrowProgram.quaternion = it
                         requestRender()
                     }
                 }
             } catch (e: Exception){
                 Timber.e(e)
             }
-
         })
 
 //        viewModel.rotationVector.observe(lifecycleOwner, {

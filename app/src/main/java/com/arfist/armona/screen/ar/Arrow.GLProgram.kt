@@ -3,6 +3,7 @@ package com.arfist.armona.screen.ar
 import android.opengl.GLES20.*
 import android.opengl.GLException
 import android.opengl.Matrix
+import com.arfist.armona.Quaternion
 import com.arfist.armona.utils.ModelLoader
 import timber.log.Timber
 import java.nio.ByteBuffer
@@ -59,12 +60,12 @@ private val fragmentShaderCode = """
     }
 """.trimIndent()
 
-fun quanternionToRotationMatrix(quanternion: FloatArray): FloatArray {
+fun quaternionToRotationMatrix(quaternion: FloatArray): FloatArray {
     // https://stackoverflow.com/questions/1556260/convert-quaternion-rotation-to-rotation-matrix
-    var qx = quanternion[1]
-    var qy = quanternion[2]
-    var qz = quanternion[3]
-    var qw = quanternion[0]
+    var qx = quaternion[1]
+    var qy = quaternion[2]
+    var qz = quaternion[3]
+    var qw = quaternion[0]
     var n = 1.0f / sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
     qx *= n;
     qy *= n;
@@ -112,7 +113,7 @@ private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
     }
 }
 
-private fun calculateModelMatrixFromQuaternion(matrix: FloatArray, quanternion: FloatArray) {
+private fun calculateModelMatrixFromQuaternion(matrix: FloatArray, quaternion: Quaternion) {
     Timber.i("mmQuat called")
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
@@ -120,7 +121,8 @@ private fun calculateModelMatrixFromQuaternion(matrix: FloatArray, quanternion: 
         Matrix.translateM(this, 0, 0f, 0.6f, 0f) // change arrow position
 
         // TODO check if login work
-        Matrix.multiplyMM(this, 0, this.copyOf(), 0, quanternionToRotationMatrix(quanternion), 0);
+        val defaultRotate = Quaternion.FromEuler(floatArrayOf(90.0f, 0.0f, 0.0f))
+        Matrix.multiplyMM(this, 0, this.copyOf(), 0, quaternionToRotationMatrix((defaultRotate*quaternion).toFloatArray()), 0)
 
         Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
         Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
@@ -164,7 +166,8 @@ class ArrowGLProgram(arrowModel: ModelLoader.MeshGroup) {
         field = value
     }
 
-    var quaternion = floatArrayOf(0f, 1f, 0f, 0f)
+//    var quaternion = floatArrayOf(0f, 1f, 0f, 0f)
+    var quaternion = Quaternion()
     set(value) {
         calculateModelMatrixFromQuaternion(model_matrix, value)
         field = value
