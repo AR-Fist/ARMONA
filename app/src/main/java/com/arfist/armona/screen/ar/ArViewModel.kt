@@ -80,9 +80,13 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val complementaryAngle: LiveData<FloatArray>
         get() = _complementaryAngle
 
-    private val _extendedKalman = MutableLiveData<FloatArray>()
-    val extendedKalman: LiveData<FloatArray>
+    private val _extendedKalman = MutableLiveData<Quaternion>()
+    val extendedKalman: LiveData<Quaternion>
         get() = _extendedKalman
+
+    private val _extendedKalmanAngle = MutableLiveData<FloatArray>()
+    val extendedKalmanAngle: LiveData<FloatArray>
+        get() = _extendedKalmanAngle
 
     private val _mGoogleOrientation = MutableLiveData<FloatArray>()
     val mGoogleOrientation: LiveData<FloatArray>
@@ -152,7 +156,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
                 extendedKalmanFilter.update((accelerometer.value!!.values).toDouble(), (magnetometer.value!!.values).toDouble())
             }
             val xHat = extendedKalmanFilter.xHat[0..3, 0]
-            _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler() + floatArrayOf(timestamp.toFloat())
+            _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat())
+            _extendedKalmanAngle.value = _extendedKalman.value!!.toEuler() + floatArrayOf(timestamp.toFloat())
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
 
@@ -212,7 +217,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
 
 //        val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
-        val arrowRotationLocalNew = arrowRotationWorld*complementaryFilter.rotationQuaternion
+//        val arrowRotationLocalNew = arrowRotationWorld*complementaryFilter.rotationQuaternion
+        val arrowRotationLocalNew = arrowRotationWorld*extendedKalman.value!!
         arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.05f)
         _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
