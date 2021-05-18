@@ -127,7 +127,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
     // Calculate every solution for rotation
     fun getOrientation(timestamp: Long) {
-        Timber.i("GetOrientation")
+//        Timber.i("GetOrientation")
         dt = (timestamp - lastTimestamp)*nanosec2sec
         lastTimestamp = timestamp
         val androidRotationMatrix = FloatArray(9)
