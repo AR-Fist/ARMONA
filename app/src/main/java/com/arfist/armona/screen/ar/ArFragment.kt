@@ -50,8 +50,12 @@ class ArFragment : Fragment() {
     private var executors = Array(2){ Executors.newSingleThreadExecutor() }
     private var roadDetectionSvc: RoadDetectionService? = null
 
+
     // Sensor: Axis convention https://developer.android.com/reference/android/hardware/SensorEvent#values
     private lateinit var sensorManager: SensorManager
+    private val cameraProvider: ProcessCameraProvider by lazy {
+        ProcessCameraProvider.getInstance(requireContext()).get()
+    }
 
     private lateinit var glController: GLController
 
@@ -92,7 +96,6 @@ class ArFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.P)
     private fun setupCam(container: ViewGroup) {
-        val cameraProvider = ProcessCameraProvider.getInstance(requireContext()).get()
         val roadDetectionUseCase = ImageAnalysis.Builder()
             .setTargetResolution(Size(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
             .build()
@@ -125,7 +128,6 @@ class ArFragment : Fragment() {
 
             // Bind use cases to camera
             cameraProvider.bindToLifecycle(this, cameraSelector, roadDetectionUseCase, liveCamViewUseCase)
-
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -173,9 +175,8 @@ class ArFragment : Fragment() {
         Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
 
 
-        val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(rgba, newImage)
-//        val resultBitmap = img?.copy(Bitmap.Config.RGB_565, true)
+//        val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
+//        Utils.matToBitmap(rgba, newImage)
 
         requireActivity().runOnUiThread {
 
@@ -190,8 +191,8 @@ class ArFragment : Fragment() {
                 android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
             )
 
-            var imgview = container.findViewById<ImageView>(R.id.image_view)
-            imgview.setImageBitmap(newImage)
+//            var imgview = container.findViewById<ImageView>(R.id.image_view)
+//            imgview.setImageBitmap(newImage)
         }
 
         imageproxy.close()
@@ -241,6 +242,7 @@ class ArFragment : Fragment() {
     override fun onStop() {
         Timber.i("onStop")
         super.onStop()
+        cameraProvider.unbindAll()
         viewModel.unregisterSensors()
     }
 
