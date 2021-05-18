@@ -1,16 +1,12 @@
 package com.arfist.armona.services
 
 import android.content.Context
-import android.icu.util.Output
-import android.location.Location
 import android.os.Looper
-import android.renderscript.ScriptGroup
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import com.arfist.armona.BuildConfig
-import com.arfist.armona.getStringFormat
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -23,17 +19,16 @@ import com.google.maps.android.PolyUtil
 import com.google.maps.android.SphericalUtil
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
-import kotlin.math.PI
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.concurrent.thread
 import kotlin.math.abs
-import kotlin.math.min
 
 const val LowestMetres: Double = 5.0
 
@@ -59,19 +54,24 @@ class LocationRepository private constructor(context: Context){
 
     private var isFetchDirectionNeeded = false
 
-    private var _currentLocation = MutableLiveData<Location>()
-    val currentLocation: LiveData<Location>
+    private var _currentLocation = MutableLiveData<ALocation>()
+    val currentLocation: LiveData<ALocation>
         get() = _currentLocation
 
-
-    val HardCodedLocation = "13.739712414289736,100.53311438774314"
+    data class ALocation(val latitude: Double, val longitude: Double){
+        override fun toString(): String {
+            return "$latitude,$longitude"
+        }
+    }
+    var manualLocation =
+        ALocation(13.739712414289736,100.53311438774314)
 
     var destination: String = ""
     set(value) {
         field = value
         runBlocking {
             Timber.i("Fetching direction")
-            setDirection(getDirection(currentLocation.value?.getStringFormat() ?: HardCodedLocation, value))
+            setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", value))
             Timber.i("Direction fetching completed.")
         }
     }
@@ -107,7 +107,7 @@ class LocationRepository private constructor(context: Context){
             if(locationResult.lastLocation != null) {
                 Timber.i("Location callback")
                 // Save location
-                _currentLocation.value = locationResult.lastLocation
+                _currentLocation.value = ALocation(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
             } else {
                 Timber.d("Location missing in callback")
             }
@@ -149,6 +149,21 @@ class LocationRepository private constructor(context: Context){
             fusedLocationProviderClient.requestLocationUpdates(locationRequest,
                 locationCallback,
                 Looper.getMainLooper())
+
+            fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_LOW_POWER, null).addOnFailureListener {result ->
+                if(result is ApiException) {
+                    Timber.i("Setting up mock-up location update")
+                    thread(start = true, isDaemon = true) {
+                        Timer().scheduleAtFixedRate(object: TimerTask() {
+                            override fun run() {
+                                Timber.i("Mock up walking...")
+                                manualLocation = ALocation(manualLocation.latitude + 0.0001, manualLocation.longitude + 0.0001)
+                                _currentLocation.postValue(manualLocation)
+                            }
+                        },0L,1000L)
+                    }
+                }
+            }
         } catch (e: SecurityException){
             Timber.e(e)
         }
@@ -338,7 +353,7 @@ class LocationRepository private constructor(context: Context){
 
     private fun distanceTo(destination: LatLng): Float {
         val result = FloatArray(3)
-        Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, destination.latitude, destination.longitude, result)
+        android.location.Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, destination.latitude, destination.longitude, result)
         return result[0]
     }
 
@@ -378,7 +393,7 @@ class LocationRepository private constructor(context: Context){
             val distanceCurrent = distanceTo(currentStop)
             val distanceNext = distanceTo(nextStop)
             val temp = FloatArray(1)
-            Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
+            android.location.Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
             val distanceBetween = temp[0]
             Log.i("TestDistance", "${distanceBetween}, ${distanceNext < distanceBetween}, ${distanceCurrent<distanceBetween}, ${distanceNext<minimumDistance}, ${distanceCurrent<minimumDistance}")
             if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
@@ -414,7 +429,7 @@ class LocationRepository private constructor(context: Context){
         val baseCount = currentCount.copyOf()
         while (!baseCount.contentEquals(nextCount)) {
             val result = FloatArray(1)
-            Location.distanceBetween(
+            android.location.Location.distanceBetween(
                 currentPoint!!.latitude,
                 currentPoint.longitude,
                 nextPoint!!.latitude,
@@ -461,7 +476,7 @@ class LocationRepository private constructor(context: Context){
 //                it.latitude, it.longitude, result)
 //        }
         getStopPoint()?.let {
-            Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, it.latitude, it.longitude, result)
+            android.location.Location.distanceBetween(_currentLocation.value!!.latitude, _currentLocation.value!!.longitude, it.latitude, it.longitude, result)
         }
 
         return result[1]
