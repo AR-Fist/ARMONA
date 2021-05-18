@@ -1,10 +1,8 @@
 package com.arfist.armona.screen.ar
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.graphics.Bitmap
 import android.hardware.SensorManager
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -53,6 +51,18 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     val cameraModel = CameraModel()
+
+    class HintText (val meter: Int){
+        override fun toString(): String {
+            return "$meter meter left"
+        }
+    }
+    private val _meter = MutableLiveData<HintText>(HintText(0))
+    val meter: LiveData<HintText>
+        get() = _meter
+    fun setMeterText(meter: HintText) {
+        _meter.postValue(meter)
+    }
 
     // Repository
     private val sensorsRepository = SensorsRepository.getInstance(application.applicationContext)

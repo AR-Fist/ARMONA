@@ -1,13 +1,9 @@
 package com.arfist.armona.screen.ar
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
 import android.hardware.SensorManager
-import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -25,8 +21,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import org.opencv.android.Utils
 import org.opencv.imgproc.Imgproc
 import java.util.concurrent.Executors
@@ -34,12 +28,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
-import org.opencv.core.Point
 import com.arfist.armona.utils.toBitmap
 import android.util.Size
-import android.widget.ImageView
-import kotlinx.android.synthetic.main.activity_cameragl.view.*
-import kotlinx.android.synthetic.main.ar_fragment.view.*
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.ceil
 
 @SuppressLint("UnsafeExperimentalUsageError")
@@ -192,6 +184,13 @@ class ArFragment : Fragment() {
 
         val glView = container.findViewById<GLView>(R.id.gl_view)
         glController = GLController(viewModel, viewLifecycleOwner, glView)
+
+        Timer().scheduleAtFixedRate(object: TimerTask() {
+            override fun run() {
+                Timber.i("Mock up re-hint...")
+                viewModel.setMeterText(ArViewModel.HintText(viewModel.meter.value!!.meter + 1))
+            }
+        },0L,1000L)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
