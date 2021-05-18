@@ -4,6 +4,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import com.arfist.armona.Quaternion
 import timber.log.Timber
+import java.lang.Exception
 import kotlin.math.PI
 
 class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glView: GLView) {
@@ -30,19 +31,46 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
             }
         })
 
-        viewModel.arrowRotation.observe(lifecycleOwner, {
-            Timber.i("updateRotation ${it.joinToString()} on $glView")
-            try {
-                with(glView!!) {
-                    queueEvent {
-                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat()
-                        requestRender()
-                    }
-                }
-            } catch (e: Exception){
-                Timber.e(e)
-            }
+//        viewModel.arrowRotation.observe(lifecycleOwner, {
+//            Timber.i("updateRotation ${it.joinToString()} on $glView")
+//            try {
+//                with(glView!!) {
+//                    queueEvent {
+//                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat()
+//                        requestRender()
+//                    }
+//                }
+//            } catch (e: Exception){
+//                Timber.e(e)
+//            }
+//
+//        })
 
-        })
+//        viewModel.rotationVector.observe(lifecycleOwner, {
+//            try {
+//                with(glView!!) {
+//                    queueEvent {
+////                        glRenderer.arrowProgram.quaternion = floatArrayOf(it.values[0], it.values[1], it.values[2], it.values[3])
+//                        glRenderer.arrowProgram.quaternion = floatArrayOf(1f, 0f, 0f, 0f)
+//                        requestRender()
+//                    }
+//                }
+//            } catch (e: Exception){
+//                Timber.e(e)
+//            }
+//
+//        })
+//        viewModel.testAndroidRotationMatrix.observe(lifecycleOwner, {
+//            try {
+//                with(glView!!) {
+//                    queueEvent {
+//                        glRenderer.arrowProgram.rotationMatrix = it
+//                        requestRender()
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                Timber.e(e)
+//            }
+//        })
     }
 }

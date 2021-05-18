@@ -125,12 +125,16 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     lateinit var myRotationMatrix: Matrix<Double>
     var myRotationVector = Quaternion(1.0f, 0f, 0f, 0f)
 
+    private val _testAndroidRotationMatrix = MutableLiveData<FloatArray>()
+    val testAndroidRotationMatrix: LiveData<FloatArray>
+        get() = _testAndroidRotationMatrix
+
     // Calculate every solution for rotation
     fun getOrientation(timestamp: Long) {
 //        Timber.i("GetOrientation")
         dt = (timestamp - lastTimestamp)*nanosec2sec
         lastTimestamp = timestamp
-        val androidRotationMatrix = FloatArray(9)
+        val androidRotationMatrix = FloatArray(16 )
         try {
             // Android's
             SensorManager.getRotationMatrix(
@@ -140,6 +144,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
                 magnetometer.value!!.values
             )
 
+            _testAndroidRotationMatrix.value = androidRotationMatrix
             val orientationAngles = FloatArray(3)
             SensorManager.getOrientation(androidRotationMatrix, orientationAngles)
             _mGoogleOrientation.value = orientationAngles + floatArrayOf(timestamp.toFloat())
