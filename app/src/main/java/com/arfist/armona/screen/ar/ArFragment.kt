@@ -158,26 +158,6 @@ class ArFragment : Fragment() {
             roadDetectionSvc = RoadDetectionService(20f * desiredSize.height.toFloat() / 480f, 150f * desiredSize.width.toFloat() / 640f)
         var resultLines = roadDetectionSvc!!.detectRoadFromBitmap(rgba)
 
-        // plot left
-        var left = resultLines[0]
-        Log.d("Left line (x1,y1,x2,y2)",left.toString())
-        var pt1 = Point(left[0].toDouble(), left[1].toDouble())
-        var pt2 = Point(left[2].toDouble(), left[3].toDouble())
-        //Drawing lines on an image
-        Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
-
-        // plot right
-        var right = resultLines[1]
-        Log.d("Right line (x1,y1,x2,y2)",right.toString())
-        pt1 = Point(right[0].toDouble(), right[1].toDouble())
-        pt2 = Point(right[2].toDouble(), right[3].toDouble())
-        //Drawing lines on an image
-        Imgproc.line(rgba, pt1, pt2, Scalar(255.0, 0.0, 0.0), 2)
-
-
-//        val newImage = Bitmap.createBitmap(desiredSize.width.toInt(), desiredSize.height.toInt(), Bitmap.Config.ARGB_8888)
-//        Utils.matToBitmap(rgba, newImage)
-
         requireActivity().runOnUiThread {
 
             viewModel.arrowModel.updateRoadLine(
@@ -190,9 +170,6 @@ class ArFragment : Fragment() {
                 }.toTypedArray(),
                 android.graphics.Point(desiredSize.height.toInt(), desiredSize.width.toInt())
             )
-
-//            var imgview = container.findViewById<ImageView>(R.id.image_view)
-//            imgview.setImageBitmap(newImage)
         }
 
         imageproxy.close()

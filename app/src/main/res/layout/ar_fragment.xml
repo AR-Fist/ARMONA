@@ -21,17 +21,6 @@
             android:windowIsTranslucent="true"
             />
 
-        <ImageView
-            android:id="@+id/image_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#FF0000"
-            android:contentDescription="Imageview"
-            android:rotation="90"
-            android:visibility="visible"
-            tools:ignore="MissingConstraints" />
-
-
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/button_ar_map"
             android:layout_width="wrap_content"

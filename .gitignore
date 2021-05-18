@@ -15,3 +15,5 @@
 .cxx
 local.properties
 /app/src/debug/res/values/google_maps_api.xml
+
+openCVLibrary3410/build
