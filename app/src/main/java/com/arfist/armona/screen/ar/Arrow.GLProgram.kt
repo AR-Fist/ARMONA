@@ -1,6 +1,5 @@
 package com.arfist.armona.screen.ar
 
-import android.opengl.GLES20
 import android.opengl.GLES20.*
 import android.opengl.GLException
 import android.opengl.Matrix
@@ -62,10 +61,10 @@ private val fragmentShaderCode = """
 
 fun quanternionToRotationMatrix(quanternion: FloatArray): FloatArray {
     // https://stackoverflow.com/questions/1556260/convert-quaternion-rotation-to-rotation-matrix
-    var qx = quanternion[0]
-    var qy = quanternion[1]
-    var qz = quanternion[2]
-    var qw = quanternion[3]
+    var qx = quanternion[1]
+    var qy = quanternion[2]
+    var qz = quanternion[3]
+    var qw = quanternion[0]
     var n = 1.0f / sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
     qx *= n;
     qy *= n;
@@ -89,6 +88,17 @@ private fun toBuffer(fa: FloatArray) = ByteBuffer
     }
 
 /** reactive update matrix every frame **/
+private  fun initModelMatrix(matrix: FloatArray) {
+    matrix.apply {
+        Matrix.setIdentityM(this, 0)
+
+        // Below is the default transform of the arrow to get arrow pointing left face up
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f) // Translate arrow to the bottom of the screen
+        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f) // Rotate the default arrow to be face up
+        Matrix.scaleM(this, 0, .4f, .4f, .4f) // Scale the arrow to be the proper size
+    }
+}
+
 private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
@@ -102,7 +112,8 @@ private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
     }
 }
 
-private fun calculateModelMatrixFromQuanternion(matrix: FloatArray, quanternion: FloatArray) {
+private fun calculateModelMatrixFromQuaternion(matrix: FloatArray, quanternion: FloatArray) {
+    Timber.i("mmQuat called")
     matrix.apply {
         Matrix.setIdentityM(this, 0) // think in reverse order
         // last transform
@@ -115,6 +126,17 @@ private fun calculateModelMatrixFromQuanternion(matrix: FloatArray, quanternion:
         Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
         Matrix.scaleM(this, 0, .4f, .4f, .4f)
         // first transform
+    }
+}
+
+private fun calculateModelMatrixFromRotationMatrix(matrix: FloatArray, rotationMatrix: FloatArray) {
+    matrix.apply {
+        Matrix.setIdentityM(this, 0)
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f)
+        Matrix.multiplyMM(this, 0, this.copyOf(), 0, rotationMatrix, 0);
+        Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
+        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
+        Matrix.scaleM(this, 0, .4f, .4f, .4f)
     }
 }
 
@@ -144,16 +166,19 @@ class ArrowGLProgram(arrowModel: ModelLoader.MeshGroup) {
 
     var quaternion = floatArrayOf(0f, 1f, 0f, 0f)
     set(value) {
-        calculateModelMatrixFromQuanternion(model_matrix, value)
+        calculateModelMatrixFromQuaternion(model_matrix, value)
         field = value
     }
 
+    var rotationMatrix = FloatArray(16)
+    set(value) {
+        calculateModelMatrixFromRotationMatrix(model_matrix, rotationMatrix)
+        field = value
+    }
 
+    // The apply function call once when created
     val model_matrix = FloatArray(16).apply {
-        calculateModelMatrixFromDegree(
-            this,
-            rotation
-        )
+        initModelMatrix(this)
     }
 
     val view_matrix = FloatArray(16).apply {
@@ -261,7 +286,7 @@ class ArrowGLProgram(arrowModel: ModelLoader.MeshGroup) {
     val uNs = uniform("ns")
 
     fun draw(){
-        Timber.i("Arrow is drawing: meshes has length of ${arrowModel.meshes.size}");
+//        Timber.i("Arrow is drawing: meshes has length of ${arrowModel.meshes.size}");
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glEnable(GL_BLEND)
         glEnable(GL_CULL_FACE)

@@ -361,4 +361,8 @@ class Quaternion(
         return  floatArrayOf(yaw, pitch, roll)
 //        return floatArrayOf(yaw, roll, pitch)
     }
+
+    fun toFloatArray(): FloatArray {
+        return floatArrayOf(this.w, this.x, this.y, this.z)
+    }
 }

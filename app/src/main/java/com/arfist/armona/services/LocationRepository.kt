@@ -94,7 +94,7 @@ class LocationRepository private constructor(context: Context){
 //        fastestInterval = TimeUnit.MILLISECONDS.toMillis(100)
         interval = 0
         fastestInterval = 0
-        maxWaitTime = TimeUnit.MINUTES.toMillis(2)
+        maxWaitTime = 0
         priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
 
