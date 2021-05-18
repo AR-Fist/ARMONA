@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10
 
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import java.util.concurrent.atomic.AtomicInteger
 
 class GLRenderer(viewModel: ArViewModel) : GLSurfaceView.Renderer {
 
@@ -21,12 +22,20 @@ class GLRenderer(viewModel: ArViewModel) : GLSurfaceView.Renderer {
 
     private val arrowModel = viewModel.arrowModel.arrowModel
     private val screenRatio = viewModel.screenModel.screenRatio
+    private val initialedCount = AtomicInteger(0)
+    fun withGLProgram(block: () -> Unit): Unit {
+        if (initialedCount.get() == 3)
+            block()
+    }
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
 
         arrowProgram = ArrowGLProgram(arrowModel!!)
+        initialedCount.incrementAndGet()
         navView = Navigation();
+        initialedCount.incrementAndGet()
         liveViewProgram = LiveCameraView(screenRatio);
+        initialedCount.incrementAndGet()
 
 
         gl.glLineWidth(2.0f)

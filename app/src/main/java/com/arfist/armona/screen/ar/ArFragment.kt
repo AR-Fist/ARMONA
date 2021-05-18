@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
 import android.hardware.SensorManager
+import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -57,6 +58,7 @@ class ArFragment : Fragment() {
         ProcessCameraProvider.getInstance(requireContext()).get()
     }
 
+    private lateinit var container: ViewGroup
     private lateinit var glController: GLController
 
     companion object {
@@ -71,6 +73,7 @@ class ArFragment : Fragment() {
         Timber.i("onCreateView")
 
         setupCam(container!!)
+        this.container = container!!
 
         // init OpenCV
         if(OpenCVLoader.initDebug()) {
@@ -187,7 +190,8 @@ class ArFragment : Fragment() {
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
 
-        glController = GLController(viewModel, viewLifecycleOwner, requireView().gl_view)
+        val glView = container.findViewById<GLView>(R.id.gl_view)
+        glController = GLController(viewModel, viewLifecycleOwner, glView)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
