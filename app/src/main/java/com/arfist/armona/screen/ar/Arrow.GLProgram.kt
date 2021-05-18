@@ -94,7 +94,6 @@ private  fun initModelMatrix(matrix: FloatArray) {
 
         // Below is the default transform of the arrow to get arrow pointing left face up
         Matrix.translateM(this, 0, 0f, 0.6f, 0f) // Translate arrow to the bottom of the screen
-        Matrix.rotateM(this, 0, 90f, 0f, 1f, 0f) // Rotate the default arrow to be face up
         Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f) // Rotate the default arrow to be face up
         Matrix.scaleM(this, 0, .4f, .4f, .4f) // Scale the arrow to be the proper size
     }

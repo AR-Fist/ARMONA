@@ -81,9 +81,9 @@ class ArFragment : Fragment() {
 //            viewModel.calculateArrowRotation()
 //        })
 
-//        viewModel.gyroscope.observe(viewLifecycleOwner, {
-//            viewModel.getOrientation(it.timestamp)
-//        })
+        viewModel.gyroscope.observe(viewLifecycleOwner, {
+            viewModel.getOrientation(it.timestamp)
+        })
 
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
 
