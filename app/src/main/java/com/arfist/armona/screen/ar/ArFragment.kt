@@ -77,8 +77,12 @@ class ArFragment : Fragment() {
         }
 
         viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
-        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
-            viewModel.calculateArrowRotation()
+//        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
+//            viewModel.calculateArrowRotation()
+//        })
+
+        viewModel.gyroscope.observe(viewLifecycleOwner, {
+            viewModel.getOrientation(it.timestamp)
         })
 
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)

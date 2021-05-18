@@ -35,7 +35,7 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
             try {
                 with(glView!!) {
                     queueEvent {
-                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat()
+                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat()*-1
                         requestRender()
                     }
                 }
