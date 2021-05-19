@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Bitmap
 import android.hardware.SensorManager
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -141,6 +142,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
     fun unregisterSensors() = sensorsRepository.unregisterSensors()
 
+    fun getStop(position: IntArray) = locationRepository.getStop(position)
+
     lateinit var myRotationMatrix: Matrix<Double>
     var myRotationVector = Quaternion(1.0f, 0f, 0f, 0f)
 
@@ -192,6 +195,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
 
+            newDegreeCalculation()
             calculateArrowRotation()
         } catch (e: Exception) {
             Timber.e(e)
@@ -254,5 +258,17 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         _arrowRotationSlerpQuaternion.value = arrowRotationLocal
         _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+    }
+
+    private val _newDegree = MutableLiveData<Float>()
+    val newDegree: LiveData<Float>
+        get() = _newDegree
+
+    fun newDegreeCalculation() {
+        val bearing = locationRepository.getBearingToNextPosition()
+//        val yawValue = myRotationVector.toEuler()[0] // yaw
+        val yawValue = complementaryAngle.value!![0].RadToDeg() // yaw
+        _newDegree.value = bearing + yawValue
+//        Log.i("Degree ARVM", _newDegree.value.toString())
     }
 }

@@ -230,6 +230,7 @@ class LocationRepository private constructor(context: Context){
     var point_count = 0
 
     class StopCount(val route_count: Int, val leg_count: Int, val step_count: Int, val point_count: Int) {
+        val array = intArrayOf(route_count, leg_count, step_count, point_count)
         override fun toString(): String {
             return "$route_count, $leg_count, $step_count, $point_count"
         }

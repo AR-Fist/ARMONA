@@ -3,6 +3,7 @@ package com.arfist.armona.screen.ar
 import android.opengl.GLES20.*
 import android.opengl.GLException
 import android.opengl.Matrix
+import android.util.Log
 import com.arfist.armona.Quaternion
 import com.arfist.armona.utils.ModelLoader
 import timber.log.Timber
@@ -106,7 +107,8 @@ private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
         // last transform
         Matrix.translateM(this, 0, 0f, 0.6f, 0f) // change arrow position
 //        Matrix.rotateM(this, 0, -90f + degree, 0f, 0f, 1f)
-        Matrix.rotateM(this, 0, -180f+degree, 0f, 0f, 1f)
+//        Log.i("Degree draw", degree.toString())
+        Matrix.rotateM(this, 0, -90f+degree, 0f, 0f, 1f)
         Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
         Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
         Matrix.scaleM(this, 0, .4f, .4f, .4f)

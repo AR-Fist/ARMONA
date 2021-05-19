@@ -1,8 +1,10 @@
 package com.arfist.armona.screen.ar
 
+import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import com.arfist.armona.Quaternion
+import com.arfist.armona.RadToDeg
 import timber.log.Timber
 import java.lang.Exception
 import kotlin.math.PI
@@ -10,7 +12,7 @@ import kotlin.math.PI
 class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glView: GLView) {
     init {
         viewModel.arrowModel.roadLine.observe(lifecycleOwner, {
-            Timber.i("updateRoadLine: $it")
+//            Timber.i("updateRoadLine: $it")
             try {
                 with(glView){
                     queueEvent{
@@ -30,7 +32,7 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
         })
 
         viewModel.cameraModel.liveViewBitmap.observe(lifecycleOwner, {
-            Timber.i("updateBitmap: $it")
+//            Timber.i("updateBitmap: $it")
             try {
                 with(glView!!) {
                     queueEvent {
@@ -46,20 +48,34 @@ class GLController(viewModel: ArViewModel, lifecycleOwner: LifecycleOwner, glVie
                 Timber.e(e)
             }
         })
+//
+//        viewModel.arrowRotationSlerp.observe(lifecycleOwner, {
+//            Timber.i("updateRotation ${it.joinToString()} on $glView")
+//            try {
+//                with(glView!!) {
+//                    queueEvent {
+//                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat() *-1
+//                        requestRender()
+//                    }
+//                }
+//            } catch (e: Exception){
+//                Timber.e(e)
+//            }
+//
+//        })
 
-        viewModel.arrowRotationSlerp.observe(lifecycleOwner, {
-            Timber.i("updateRotation ${it.joinToString()} on $glView")
-            try {
+        viewModel.newDegree.observe(lifecycleOwner, {
+//            Log.i("Degree arrow", it.toString())
+            try{
                 with(glView!!) {
-                    queueEvent {
-                        glRenderer.arrowProgram.rotation = it[0] * 180.0f / PI.toFloat() *-1
+                    queueEvent{
+                        glRenderer.arrowProgram.rotation = -it
                         requestRender()
                     }
                 }
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 Timber.e(e)
             }
-
         })
 
 //        viewModel.arrowRotationSlerpQuaternion.observe(lifecycleOwner, {

@@ -180,6 +180,7 @@ class ArFragment : Fragment() {
 
         val locationText = view.findViewById<TextView>(R.id.Location)
         val meterText = view.findViewById<TextView>(R.id.meter)
+        val destinationText = view.findViewById<TextView>(R.id.Destination)
 
         sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
             viewModel.setDistanceText()
@@ -190,6 +191,7 @@ class ArFragment : Fragment() {
         val stopText = view.findViewById<TextView>(R.id.stopPoint)
         viewModel.stopCount.observe(viewLifecycleOwner, {
             stopText.text = it.toString()
+            destinationText.text = viewModel.getStop(it.array).toString()
         })
         viewModel.gyroscope.observe(viewLifecycleOwner, {
             viewModel.getOrientation(it.timestamp)
