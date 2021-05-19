@@ -54,17 +54,19 @@ class LocationRepository private constructor(context: Context){
 
     private var isFetchDirectionNeeded = false
 
-    private var _currentLocation = MutableLiveData<ALocation>()
-    val currentLocation: LiveData<ALocation>
-        get() = _currentLocation
-
     data class ALocation(val latitude: Double, val longitude: Double){
         override fun toString(): String {
             return "$latitude,$longitude"
         }
     }
     var manualLocation =
-        ALocation(13.739712414289736,100.53311438774314)
+            ALocation(13.739712414289736,100.53311438774314)
+
+//    private var _currentLocation = MutableLiveData<ALocation>()
+    private var _currentLocation = MutableLiveData(manualLocation)
+    val currentLocation: LiveData<ALocation>
+        get() = _currentLocation
+
 
     var destination: String = ""
     set(value) {
@@ -105,9 +107,9 @@ class LocationRepository private constructor(context: Context){
             super.onLocationResult(locationResult)
 
             if(locationResult.lastLocation != null) {
-                Timber.i("Location callback")
                 // Save location
                 _currentLocation.value = ALocation(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
+                Timber.i("Location callback: ${_currentLocation.value.toString()}")
             } else {
                 Timber.d("Location missing in callback")
             }
@@ -226,6 +228,16 @@ class LocationRepository private constructor(context: Context){
     var leg_count = 0
     var step_count = 0
     var point_count = 0
+
+    class StopCount(val route_count: Int, val leg_count: Int, val step_count: Int, val point_count: Int) {
+        override fun toString(): String {
+            return "$route_count, $leg_count, $step_count, $point_count"
+        }
+    }
+    private val _stopCount = MutableLiveData(StopCount(route_count, leg_count, step_count, point_count))
+    val stopCount: LiveData<StopCount>
+            get() = _stopCount
+
     var stopLocation: JSONLatLng? = null
     fun getStop(route_count: Int, leg_count: Int, step_count: Int, point_count: Int): LatLng? {
         /**
@@ -358,6 +370,8 @@ class LocationRepository private constructor(context: Context){
     }
 
     fun distanceLeft(): Float? {
+//        _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
+        _stopCount.value = StopCount(route_count, leg_count, step_count, point_count)
         return getStop(route_count, leg_count, step_count, point_count)?.let { distanceTo(it) }
     }
     var minimumDistance = 100.0f
@@ -450,6 +464,8 @@ class LocationRepository private constructor(context: Context){
                     leg_count = currentCount[1]
                     step_count = currentCount[2]
                     point_count = currentCount[3]
+//                    _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
+                    _stopCount.value = StopCount(route_count, leg_count, step_count, point_count)
                     return nextPoint
                 } else {
                     // TODO: find new direction
@@ -459,6 +475,8 @@ class LocationRepository private constructor(context: Context){
                     leg_count = prevCount[1]
                     step_count = prevCount[2]
                     point_count = prevCount[3]
+//                    _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
+                    _stopCount.value = StopCount(route_count, leg_count, step_count, point_count)
                     return currentPoint
                 }
             }

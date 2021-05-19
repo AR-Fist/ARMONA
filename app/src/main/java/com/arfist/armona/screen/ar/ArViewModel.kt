@@ -53,12 +53,16 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     }
     val cameraModel = CameraModel()
 
+    // Repository
+    private val sensorsRepository = SensorsRepository.getInstance(application.applicationContext)
+    private val locationRepository = LocationRepository.getInstance(application.applicationContext)
+
     class HintText (val meter: Int){
         override fun toString(): String {
             return "$meter meter left"
         }
     }
-    private val _meter = MutableLiveData<HintText>(HintText(0))
+    private val _meter = MutableLiveData(HintText(0))
     val meter: LiveData<HintText>
         get() = _meter
     fun setMeterText(meter: HintText) {
@@ -76,9 +80,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         setMeterText(meter.value!!)
     }
 
-    // Repository
-    private val sensorsRepository = SensorsRepository.getInstance(application.applicationContext)
-    private val locationRepository = LocationRepository.getInstance(application.applicationContext)
+    val stopCount = locationRepository.stopCount
+    val currentLocation = locationRepository.currentLocation
 
     // Base sensors
     val accelerometer = sensorsRepository.accelerometer

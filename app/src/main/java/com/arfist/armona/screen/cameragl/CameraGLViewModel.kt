@@ -10,7 +10,7 @@ class CameraGLViewModel: ViewModel() {
     var arrowFovy = 30f
     var cameraBitmap: Bitmap? = null
     var arrowQuaternion = floatArrayOf(0f, 1f, 0f, 0f) // use if rotationMode = RotationMode.QUATERNION
-    var rotationMode: RotationMode = RotationMode.QUATERNION // please set mode here
+    var rotationMode: RotationMode = RotationMode.EULER // please set mode here
 
     enum class RotationMode {
         EULER,      // use arrowRotation (default=EULER)
