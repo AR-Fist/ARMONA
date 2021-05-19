@@ -57,6 +57,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     private val sensorsRepository = SensorsRepository.getInstance(application.applicationContext)
     private val locationRepository = LocationRepository.getInstance(application.applicationContext)
 
+    fun distanceLeft() = locationRepository.distanceLeft()
     class HintText (val meter: Int){
         override fun toString(): String {
             return "$meter meter left"
@@ -67,6 +68,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         get() = _meter
     fun setMeterText(meter: HintText) {
         _meter.postValue(meter)
+        Timber.i("Meter update to: $meter")
     }
 
     fun setDistanceText() {

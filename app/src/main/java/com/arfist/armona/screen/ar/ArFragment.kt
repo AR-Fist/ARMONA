@@ -30,6 +30,8 @@ import org.opencv.android.OpenCVLoader
 import org.opencv.core.*
 import com.arfist.armona.utils.toBitmap
 import android.util.Size
+import android.widget.TextView
+import org.w3c.dom.Text
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
@@ -76,13 +78,6 @@ class ArFragment : Fragment() {
         }
 
         viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
-        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
-            viewModel.setDistanceText()
-        })
-
-        viewModel.gyroscope.observe(viewLifecycleOwner, {
-            viewModel.getOrientation(it.timestamp)
-        })
 
         binding = DataBindingUtil.inflate(inflater, R.layout.ar_fragment, container, false)
 
@@ -147,7 +142,7 @@ class ArFragment : Fragment() {
         val desiredSize = org.opencv.core.Size(ceil(_rgba.width() * 240.0 / _rgba.height()), 240.0)
         val rgba = Mat(desiredSize, _rgba.type())
         Imgproc.resize(_rgba, rgba, desiredSize)
-        Timber.i("Processing those image with resolution W=${rgba.width()}, H=${rgba.height()}")
+//        Timber.i("Processing those image with resolution W=${rgba.width()}, H=${rgba.height()}")
 
         if (roadDetectionSvc == null)
             roadDetectionSvc = RoadDetectionService(20f * desiredSize.height.toFloat() / 480f, 150f * desiredSize.width.toFloat() / 640f)
@@ -170,6 +165,7 @@ class ArFragment : Fragment() {
         imageproxy.close()
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.i("onViewCreated")
@@ -181,6 +177,23 @@ class ArFragment : Fragment() {
         binding.buttonArMap.setOnClickListener { mView: View ->
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
+
+        val locationText = view.findViewById<TextView>(R.id.Location)
+        val meterText = view.findViewById<TextView>(R.id.meter)
+
+        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
+            viewModel.setDistanceText()
+            locationText.text = it.toString()
+            meterText.text = "${viewModel.distanceLeft()} metres left"
+        })
+
+        val stopText = view.findViewById<TextView>(R.id.stopPoint)
+        viewModel.stopCount.observe(viewLifecycleOwner, {
+            stopText.text = it.toString()
+        })
+        viewModel.gyroscope.observe(viewLifecycleOwner, {
+            viewModel.getOrientation(it.timestamp)
+        })
 
         val glView = container.findViewById<GLView>(R.id.gl_view)
         glController = GLController(viewModel, viewLifecycleOwner, glView)

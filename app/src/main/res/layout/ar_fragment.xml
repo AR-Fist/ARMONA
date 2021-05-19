@@ -27,7 +27,6 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/white"
                 android:hint="@string/testPlaceholder"
-                android:text="@{arViewModel.meter.toString()}"
                 android:textSize="24sp" />
 
             <TextView
@@ -35,7 +34,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/testPlaceholder"
-                android:text="@{arViewModel.stopCount.toString()}"
                 android:textSize="24sp" />
 
             <TextView
@@ -43,7 +41,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/testPlaceholder"
-                android:text="@{arViewModel.currentLocation.toString()}"
                 android:textSize="24sp" />
 
             <view
