@@ -324,7 +324,7 @@ class LocationRepository private constructor(context: Context){
         return result[0]
     }
 
-    var minimumDistance = 100.0f
+    var minimumDistance = 30.0f
     private fun getNextPosition(): LatLng? {
         /**
          * Determine next position

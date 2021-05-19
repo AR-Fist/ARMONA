@@ -108,6 +108,8 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             val orientationAngles = FloatArray(3)
             SensorManager.getOrientation(androidRotationMatrix, orientationAngles)
             _mGoogleOrientation.value = orientationAngles + floatArrayOf(timestamp.toFloat())
+            Log.i("orientation angles","${orientationAngles[0].RadToDeg()}, ${orientationAngles[1].RadToDeg()}, ${orientationAngles[2].RadToDeg()}")
+
         } catch (e: Exception) {
             Timber.e(e)
         }
@@ -190,7 +192,7 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         val bearing = locationRepository.getBearingToNextPosition()
         val degree = locationRepository.BearingToDegree(bearing)
         // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
-        val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
+        val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f)) // This use as yaw
 
         val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
         arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.1f)
@@ -202,5 +204,17 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
         val testSlerp = arrowRotationLocal*myRotationVector.inverse()
         _testSlerp.value = testSlerp.toEuler() + floatArrayOf(lastTimestamp.toFloat())
+    }
+
+    private val _newDegree = MutableLiveData<Float>()
+    val newDegree: LiveData<Float>
+        get() = _newDegree
+
+    fun newDegreeCalculation() {
+        val bearing = locationRepository.getBearingToNextPosition()
+
+        val yawValue = myRotationVector.toEuler()[0] // yaw
+
+        _newDegree.value = bearing + yawValue
     }
 }
