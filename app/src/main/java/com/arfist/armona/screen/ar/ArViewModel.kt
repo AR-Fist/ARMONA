@@ -74,19 +74,11 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val magnetometer = sensorsRepository.magnetometer
 
     // Software sensors
-//    val gravity = sensorsRepository.gravity
     val rotationVector = sensorsRepository.rotationVector
-    //    val linearAccelerometer = sensorsRepository.linearAccelerometer
-
-    // Base sensors but uncalibrated
-//    val uncalibAccelerometer = sensorsRepository.uncalibratedAccelerometer
-//    val uncalibGyroscope = sensorsRepository.uncalibratedGyroscope
-//    val uncalibMagnetometer = sensorsRepository.uncalibratedMagnetometer
 
     // Filters
     private val complementaryFilter = ComplementaryFilterRotation(0.98F)
     private val complementaryFilterGravity = ComplementaryFilterRotation(0.98F)
-//    private val kalmanFilter1D = KalmanFilter1D()
     private val extendedKalmanFilter = ExtendedKalmanFilter()
 
     // Constant
@@ -98,9 +90,13 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val complementaryAngle: LiveData<FloatArray>
         get() = _complementaryAngle
 
-    private val _extendedKalman = MutableLiveData<FloatArray>()
-    val extendedKalman: LiveData<FloatArray>
+    private val _extendedKalman = MutableLiveData<Quaternion>()
+    val extendedKalman: LiveData<Quaternion>
         get() = _extendedKalman
+
+    private val _extendedKalmanAngle = MutableLiveData<FloatArray>()
+    val extendedKalmanAngle: LiveData<FloatArray>
+        get() = _extendedKalmanAngle
 
     private val _mGoogleOrientation = MutableLiveData<FloatArray>()
     val mGoogleOrientation: LiveData<FloatArray>
@@ -115,18 +111,14 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
     val arrowRotation: LiveData<FloatArray>
         get() = _arrowRotation
 
+    private val _arrowRotationSlerpQuaternion = MutableLiveData<Quaternion>()
+    val arrowRotationSlerpQuaternion: LiveData<Quaternion>
+        get() = _arrowRotationSlerpQuaternion
+
     private val _arrowRotationSlerp = MutableLiveData<FloatArray>()
     val arrowRotationSlerp: LiveData<FloatArray>
         get() = _arrowRotationSlerp
 
-    // Test purpose
-    private val _testAngle = MutableLiveData<FloatArray>()
-    val testAngle: LiveData<FloatArray>
-        get() = _testAngle
-
-    private val _testSlerp = MutableLiveData<FloatArray>()
-    val testSlerp: LiveData<FloatArray>
-        get() = _testSlerp
 
     fun registerSensors() = sensorsRepository.registerSensors()
 
@@ -168,22 +160,18 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
             myRotationVector = Quaternion.FromRotationMatrix(myRotationMatrix)
             val myOrientationAngles = calculateMyOrientationAngle(myRotationMatrix)
 
-//            val myGravityRotationMatrix = calculateRotationMatrix(gravity.value!!.values, magnetometer.value!!.values)
-//            val myGravityRotationVector = calculateQuaternionFromRotationMatrix(myGravityRotationMatrix)
-//            val myGravityOrientationAngles = calculateMyOrientationAngle(myGravityRotationMatrix)
-
             _myOrientationAngle.value = myOrientationAngles + floatArrayOf(timestamp.toFloat())
             // Add gyroscope
             gyroscope.value?.values?.let {
                 val gyroscopeDouble = it.toDouble()
                 complementaryFilter.filter(it, myRotationVector, dt)
-//                complementaryFilterGravity.filter(it, myGravityRotationVector, dt)
 
                 extendedKalmanFilter.predict(gyroscopeDouble, dt)
                 extendedKalmanFilter.update((accelerometer.value!!.values).toDouble(), (magnetometer.value!!.values).toDouble())
             }
             val xHat = extendedKalmanFilter.xHat[0..3, 0]
-            _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat()).toEuler() + floatArrayOf(timestamp.toFloat())
+            _extendedKalman.value = Quaternion(xHat[0].toFloat(), xHat[1].toFloat(), xHat[2].toFloat(), xHat[3].toFloat())
+            _extendedKalmanAngle.value = _extendedKalman.value!!.toEuler() + floatArrayOf(timestamp.toFloat())
 
             _complementaryAngle.value = complementaryFilter.rotationQuaternion.toEuler() + floatArrayOf(timestamp.toFloat())
 
@@ -242,15 +230,12 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         // Rotate arrow from north cw to east as bearing degree converted to quaternion then apply with the quaternion calculated
         val arrowRotationWorld = Quaternion.FromEuler(floatArrayOf(degree.DegToRad(), 0f, 0f))
 
-        val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
-        arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.1f)
+//        val arrowRotationLocalNew = arrowRotationWorld*myRotationVector
+//        val arrowRotationLocalNew = arrowRotationWorld*complementaryFilter.rotationQuaternion
+        val arrowRotationLocalNew = arrowRotationWorld*extendedKalman.value!!
+        arrowRotationLocal = arrowRotationLocal.slerp(arrowRotationLocalNew, 0.05f)
+        _arrowRotationSlerpQuaternion.value = arrowRotationLocal
         _arrowRotationSlerp.value = arrowRotationLocal.toEuler() + floatArrayOf(lastTimestamp.toFloat())
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
-
-        val test = arrowRotationLocalNew*myRotationVector.inverse()
-        _testAngle.value = test.toEuler() + floatArrayOf(lastTimestamp.toFloat())
-
-        val testSlerp = arrowRotationLocal*myRotationVector.inverse()
-        _testSlerp.value = testSlerp.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 }

@@ -58,10 +58,10 @@ fun Double.RadToDeg(): Double {
 }
 
 class Quaternion(
-    val w: Float,
-    val x: Float,
-    val y: Float,
-    val z: Float
+    val w: Float = 1.0f,
+    val x: Float = 0.0f,
+    val y: Float = 0.0f,
+    val z: Float = 0.0f
     ) {
     private val EPSILON = 1e-4
     operator fun plus(other: Quaternion): Quaternion {
@@ -289,17 +289,56 @@ class Quaternion(
         }
     }
 
-    fun toRotationMatrix(): FloatArray {
-        val rotationMatrix = FloatArray(9)
-        rotationMatrix[0] = this.w*this.w + this.x*this.x - this.y*this.y - this.z*this.z
-        rotationMatrix[1] = 2 * (this.x*this.y - this.w*this.z)
-        rotationMatrix[2] = 2 * (this.x*this.z + this.w*this.y)
-        rotationMatrix[3] = 2 * (this.x*this.y + this.w*this.z)
-        rotationMatrix[4] = this.w*this.w - this.x*this.x + this.y*this.y - this.z*this.z
-        rotationMatrix[5] = 2 * (this.y*this.z - this.w*this.x)
-        rotationMatrix[6] = 2 * (this.x*this.z - this.w*this.y)
-        rotationMatrix[7] = 2 * (this.y*this.z + this.w*this.x)
-        rotationMatrix[8] = this.w*this.w - this.x*this.x - this.y*this.y + this.z*this.z
+    fun toRotationMatrix(size: Int = 9): FloatArray {
+        val rotationMatrix = FloatArray(size)
+        if (size == 9) {
+            rotationMatrix[0] = this.w*this.w + this.x*this.x - this.y*this.y - this.z*this.z
+            rotationMatrix[1] = 2 * (this.x*this.y - this.w*this.z)
+            rotationMatrix[2] = 2 * (this.x*this.z + this.w*this.y)
+            rotationMatrix[3] = 2 * (this.x*this.y + this.w*this.z)
+            rotationMatrix[4] = this.w*this.w - this.x*this.x + this.y*this.y - this.z*this.z
+            rotationMatrix[5] = 2 * (this.y*this.z - this.w*this.x)
+            rotationMatrix[6] = 2 * (this.x*this.z - this.w*this.y)
+            rotationMatrix[7] = 2 * (this.y*this.z + this.w*this.x)
+            rotationMatrix[8] = this.w*this.w - this.x*this.x - this.y*this.y + this.z*this.z
+        }
+        else if (size == 16) {
+            rotationMatrix[0] = this.w*this.w + this.x*this.x - this.y*this.y - this.z*this.z
+            rotationMatrix[1] = 2 * (this.x*this.y - this.w*this.z)
+            rotationMatrix[2] = 2 * (this.x*this.z + this.w*this.y)
+            rotationMatrix[3] = 2 * (this.x*this.y + this.w*this.z)
+            rotationMatrix[4] = 0f
+            rotationMatrix[5] = this.w*this.w - this.x*this.x + this.y*this.y - this.z*this.z
+            rotationMatrix[6] = 2 * (this.y*this.z - this.w*this.x)
+            rotationMatrix[7] = 2 * (this.x*this.z - this.w*this.y)
+            rotationMatrix[8] = 0f
+            rotationMatrix[9] = 2 * (this.y*this.z + this.w*this.x)
+            rotationMatrix[10] = this.w*this.w - this.x*this.x - this.y*this.y + this.z*this.z
+            rotationMatrix[11] = 0f
+            rotationMatrix[12] = 0f
+            rotationMatrix[13] = 0f
+            rotationMatrix[14] = 0f
+            rotationMatrix[15] = 1f
+        }
+        else {
+            // Return Identity if wrong size
+            rotationMatrix[0] = 1f
+            rotationMatrix[1] = 0f
+            rotationMatrix[2] = 0f
+            rotationMatrix[3] = 0f
+            rotationMatrix[4] = 0f
+            rotationMatrix[5] = 1f
+            rotationMatrix[6] = 0f
+            rotationMatrix[7] = 0f
+            rotationMatrix[8] = 0f
+            rotationMatrix[9] = 0f
+            rotationMatrix[10] = 1f
+            rotationMatrix[11] = 0f
+            rotationMatrix[12] = 0f
+            rotationMatrix[13] = 0f
+            rotationMatrix[14] = 0f
+            rotationMatrix[15] = 1f
+        }
         return rotationMatrix
     }
 
