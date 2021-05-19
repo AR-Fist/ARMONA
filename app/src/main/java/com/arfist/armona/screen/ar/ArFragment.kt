@@ -76,9 +76,9 @@ class ArFragment : Fragment() {
         }
 
         viewModel = ViewModelProvider(this).get(ArViewModel::class.java)
-//        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
-//            viewModel.calculateArrowRotation()
-//        })
+        sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
+            viewModel.setDistanceText()
+        })
 
         viewModel.gyroscope.observe(viewLifecycleOwner, {
             viewModel.getOrientation(it.timestamp)
@@ -185,12 +185,12 @@ class ArFragment : Fragment() {
         val glView = container.findViewById<GLView>(R.id.gl_view)
         glController = GLController(viewModel, viewLifecycleOwner, glView)
 
-        Timer().scheduleAtFixedRate(object: TimerTask() {
-            override fun run() {
-                Timber.i("Mock up re-hint...")
-                viewModel.setMeterText(ArViewModel.HintText(viewModel.meter.value!!.meter + 1))
-            }
-        },0L,1000L)
+//        Timer().scheduleAtFixedRate(object: TimerTask() {
+//            override fun run() {
+//                Timber.i("Mock up re-hint...")
+//                viewModel.setMeterText(ArViewModel.HintText(viewModel.meter.value!!.meter + 1))
+//            }
+//        },0L,1000L)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {

@@ -357,69 +357,72 @@ class LocationRepository private constructor(context: Context){
         return result[0]
     }
 
-    var minimumDistance = 100.0f
-    private fun getNextPosition(): LatLng? {
-        /**
-         * Determine next position
-         *
-         * Input:
-         *  - Current location: LatLng
-         *  - Last Position: LatLng
-         *  - Next Position: LatLng
-         *  - epsilon: Float = minimum value that have to request new direction
-         * Output:
-         *  - LatLng of the position that have to nanivate to
-         *
-         *  Algorithm
-         *   a = distance from current_location to heading_stop
-         *   b = distance from current_location to current_stop
-         *   c = distance from last_stop to heading_stop
-         *
-         *   if a < c and b < c then
-         *      next_position = heading_position
-         *   else if a > c and b < epsilon then
-         *      next_position = last_position
-         *      current_count = prev_count
-         *   else if b > c and a < epsilon then
-         *      next_position = next_position
-         *      current_count = heading_count
-         *   else if a > c and b > epsilon or b > c and a > epsilon then
-         *      request new direction
-         */
-        val currentStop = getStop(route_count, leg_count, step_count, point_count)
-        val nextCount = incrementCounting(route_count, leg_count, step_count, point_count)
-        val nextStop = getStop(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
-        if (currentStop != null && nextStop != null) {
-            val distanceCurrent = distanceTo(currentStop)
-            val distanceNext = distanceTo(nextStop)
-            val temp = FloatArray(1)
-            android.location.Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
-            val distanceBetween = temp[0]
-            Log.i("TestDistance", "${distanceBetween}, ${distanceNext < distanceBetween}, ${distanceCurrent<distanceBetween}, ${distanceNext<minimumDistance}, ${distanceCurrent<minimumDistance}")
-            if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
-                return nextStop
-            } else if (distanceNext > distanceBetween && distanceCurrent < minimumDistance) {
-                val prevCount = decrementCounting(route_count, leg_count, step_count, point_count)
-                route_count = prevCount[0]
-                leg_count = prevCount[1]
-                step_count = prevCount[2]
-                point_count = prevCount[3]
-                return currentStop
-            } else if (distanceCurrent > distanceBetween && distanceNext < minimumDistance) {
-                val newCount = incrementCounting(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
-                route_count = nextCount[0]
-                leg_count = nextCount[1]
-                step_count = nextCount[2]
-                point_count = nextCount[3]
-                return getStop(newCount[0], newCount[1], newCount[2], newCount[3])
-            } else if ((distanceNext > distanceBetween && distanceCurrent > minimumDistance) || (distanceCurrent > distanceBetween && distanceNext > minimumDistance)) {
-                // TODO: find new direction
-                resetCounting()
-                return null
-            }
-        }
-        return null
+    fun distanceLeft(): Float? {
+        return getStop(route_count, leg_count, step_count, point_count)?.let { distanceTo(it) }
     }
+    var minimumDistance = 100.0f
+//    private fun getNextPosition(): LatLng? {
+//        /**
+//         * Determine next position
+//         *
+//         * Input:
+//         *  - Current location: LatLng
+//         *  - Last Position: LatLng
+//         *  - Next Position: LatLng
+//         *  - epsilon: Float = minimum value that have to request new direction
+//         * Output:
+//         *  - LatLng of the position that have to nanivate to
+//         *
+//         *  Algorithm
+//         *   a = distance from current_location to heading_stop
+//         *   b = distance from current_location to current_stop
+//         *   c = distance from last_stop to heading_stop
+//         *
+//         *   if a < c and b < c then
+//         *      next_position = heading_position
+//         *   else if a > c and b < epsilon then
+//         *      next_position = last_position
+//         *      current_count = prev_count
+//         *   else if b > c and a < epsilon then
+//         *      next_position = next_position
+//         *      current_count = heading_count
+//         *   else if a > c and b > epsilon or b > c and a > epsilon then
+//         *      request new direction
+//         */
+//        val currentStop = getStop(route_count, leg_count, step_count, point_count)
+//        val nextCount = incrementCounting(route_count, leg_count, step_count, point_count)
+//        val nextStop = getStop(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
+//        if (currentStop != null && nextStop != null) {
+//            val distanceCurrent = distanceTo(currentStop)
+//            val distanceNext = distanceTo(nextStop)
+//            val temp = FloatArray(1)
+//            android.location.Location.distanceBetween(currentStop.latitude, currentStop.longitude, nextStop.latitude, nextStop.longitude, temp)
+//            val distanceBetween = temp[0]
+//            Log.i("TestDistance", "${distanceBetween}, ${distanceNext < distanceBetween}, ${distanceCurrent<distanceBetween}, ${distanceNext<minimumDistance}, ${distanceCurrent<minimumDistance}")
+//            if (distanceNext < distanceBetween && distanceCurrent < distanceBetween) {
+//                return nextStop
+//            } else if (distanceNext > distanceBetween && distanceCurrent < minimumDistance) {
+//                val prevCount = decrementCounting(route_count, leg_count, step_count, point_count)
+//                route_count = prevCount[0]
+//                leg_count = prevCount[1]
+//                step_count = prevCount[2]
+//                point_count = prevCount[3]
+//                return currentStop
+//            } else if (distanceCurrent > distanceBetween && distanceNext < minimumDistance) {
+//                val newCount = incrementCounting(nextCount[0], nextCount[1], nextCount[2], nextCount[3])
+//                route_count = nextCount[0]
+//                leg_count = nextCount[1]
+//                step_count = nextCount[2]
+//                point_count = nextCount[3]
+//                return getStop(newCount[0], newCount[1], newCount[2], newCount[3])
+//            } else if ((distanceNext > distanceBetween && distanceCurrent > minimumDistance) || (distanceCurrent > distanceBetween && distanceNext > minimumDistance)) {
+//                // TODO: find new direction
+//                resetCounting()
+//                return null
+//            }
+//        }
+//        return null
+//    }
 
     fun getStopPoint(): LatLng? {
         var currentCount = intArrayOf(route_count, leg_count, step_count, point_count)

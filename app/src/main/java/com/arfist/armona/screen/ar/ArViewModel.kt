@@ -3,6 +3,7 @@ package com.arfist.armona.screen.ar
 import android.app.Application
 import android.graphics.Bitmap
 import android.hardware.SensorManager
+import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -62,6 +63,17 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         get() = _meter
     fun setMeterText(meter: HintText) {
         _meter.postValue(meter)
+    }
+
+    fun setDistanceText() {
+        val distance = locationRepository.distanceLeft()
+        if (distance == null) {
+            _meter.value = HintText(-1)
+        }
+        else {
+            _meter.value = HintText(distance.toInt())
+        }
+        setMeterText(meter.value!!)
     }
 
     // Repository
