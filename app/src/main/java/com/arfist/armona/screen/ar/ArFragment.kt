@@ -178,20 +178,20 @@ class ArFragment : Fragment() {
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
 
-        val locationText = view.findViewById<TextView>(R.id.Location)
+//        val locationText = view.findViewById<TextView>(R.id.Location)
         val meterText = view.findViewById<TextView>(R.id.meter)
-        val destinationText = view.findViewById<TextView>(R.id.Destination)
+//        val destinationText = view.findViewById<TextView>(R.id.Destination)
 
         sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
             viewModel.setDistanceText()
-            locationText.text = it.toString()
-            meterText.text = "${viewModel.distanceLeft()} metres left"
+//            locationText.text = it.toString()
+            meterText.text = "${viewModel.distanceLeft()} metres left to next way point"
         })
 
         val stopText = view.findViewById<TextView>(R.id.stopPoint)
         viewModel.stopCount.observe(viewLifecycleOwner, {
             stopText.text = it.toString()
-            destinationText.text = viewModel.getStop(it.array).toString()
+//            destinationText.text = viewModel.getStop(it.array).toString()
         })
         viewModel.gyroscope.observe(viewLifecycleOwner, {
             viewModel.getOrientation(it.timestamp)
