@@ -459,20 +459,20 @@ class LocationRepository private constructor(context: Context){
                     _stopCount.value = StopCount(nextCount)
                     return nextPoint
                 } else {
-//                    // TODO: find new direction
-//                    val prevCount =
-//                        decrementCounting(route_count, leg_count, step_count, point_count)
-//                    route_count = prevCount[0]
-//                    leg_count = prevCount[1]
-//                    step_count = prevCount[2]
-//                    point_count = prevCount[3]
-//                    _stopCount.value = StopCount(currentCount)
-//                    return currentPoint
-                    runBlocking {
-                        Timber.i("Fetching direction")
-                        setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
-                        Timber.i("Direction fetching completed.")
-                    }
+                    // TODO: find new direction
+                    val prevCount =
+                        decrementCounting(route_count, leg_count, step_count, point_count)
+                    route_count = prevCount[0]
+                    leg_count = prevCount[1]
+                    step_count = prevCount[2]
+                    point_count = prevCount[3]
+                    _stopCount.value = StopCount(currentCount)
+                    return currentPoint
+//                    runBlocking {
+//                        Timber.i("Fetching direction")
+//                        setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
+//                        Timber.i("Direction fetching completed.")
+//                    }
                     resetCounting()
                     return getStop(route_count, leg_count, step_count, point_count)
                 }
@@ -482,13 +482,14 @@ class LocationRepository private constructor(context: Context){
             nextCount = incrementCounting(nextCount)
             nextPoint = getStop(nextCount)
         }
-        runBlocking {
-            Timber.i("Fetching direction")
-            setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
-            Timber.i("Direction fetching completed.")
-        }
-        resetCounting()
-        return getStop(route_count, leg_count, step_count, point_count)
+//        runBlocking {
+//            Timber.i("Fetching direction")
+//            setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
+//            Timber.i("Direction fetching completed.")
+//        }
+//        resetCounting()
+//        return getStop(route_count, leg_count, step_count, point_count)
+        return nextPoint
     }
 
 
