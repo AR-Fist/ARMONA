@@ -100,6 +100,8 @@ class LocationRepository private constructor(context: Context){
         priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
 
+    var BaseDestination: LatLng = LatLng(0.0, 0.0)
+    var firstTime = true
     // Location callback
     // Callback when FusedLocationProvider get new location
     private val locationCallback = object: LocationCallback() {
@@ -107,6 +109,10 @@ class LocationRepository private constructor(context: Context){
             super.onLocationResult(locationResult)
 
             if(locationResult.lastLocation != null) {
+                if (firstTime) {
+                    BaseDestination = SphericalUtil.computeOffset(LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude), 10.0, 0.0)
+                    firstTime = false
+                }
                 // Save location
                 _currentLocation.value = ALocation(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
                 Timber.i("Location callback: ${_currentLocation.value.toString()}")
@@ -258,7 +264,8 @@ class LocationRepository private constructor(context: Context){
         }
 
     fun getStop(position: IntArray): LatLng? {
-        return getStop(position[0], position[1], position[2], position[3])
+        return BaseDestination
+//        return getStop(position[0], position[1], position[2], position[3])
     }
 
     fun resetCounting() {
@@ -362,7 +369,8 @@ class LocationRepository private constructor(context: Context){
 
     fun distanceLeft(): Float? {
 //        _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
-        return getStop(_stopCount.value!!.countArray)?.let { distanceTo(it) }
+//        return getStop(_stopCount.value!!.countArray)?.let { distanceTo(it) }
+        return distanceTo(BaseDestination)
     }
     var minimumDistance = 50.0f
     val inDistance = 10.0f
@@ -430,66 +438,68 @@ class LocationRepository private constructor(context: Context){
 //    }
 
     fun getStopPoint(): LatLng? {
-        var currentCount = intArrayOf(route_count, leg_count, step_count, point_count)
-        var currentPoint = getStop(currentCount)
-        var nextCount = incrementCounting(currentCount)
-        var nextPoint = getStop(nextCount)
-        val baseCount = currentCount.copyOf()
-        while (!baseCount.contentEquals(nextCount)) {
-            val result = FloatArray(1)
-            android.location.Location.distanceBetween(
-                currentPoint!!.latitude,
-                currentPoint.longitude,
-                nextPoint!!.latitude,
-                nextPoint.longitude,
-                result
-            )
-            val pointToPoint = result[0]
-            val pointToHere = distanceTo(currentPoint)
-            if (pointToHere <= pointToPoint) {
-                val ratio = pointToHere / pointToPoint
-                val midPoint = SphericalUtil.interpolate(currentPoint, nextPoint, ratio.toDouble())
-                val offset = distanceTo(midPoint)
-                if (offset <= minimumDistance || pointToHere < inDistance) {
-                    route_count = currentCount[0]
-                    leg_count = currentCount[1]
-                    step_count = currentCount[2]
-                    point_count = currentCount[3]
-//                    _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
-                    _stopCount.value = StopCount(nextCount)
-                    return nextPoint
-                } else {
-                    // TODO: find new direction
-                    val prevCount =
-                        decrementCounting(route_count, leg_count, step_count, point_count)
-                    route_count = prevCount[0]
-                    leg_count = prevCount[1]
-                    step_count = prevCount[2]
-                    point_count = prevCount[3]
-                    _stopCount.value = StopCount(currentCount)
-                    return currentPoint
-//                    runBlocking {
-//                        Timber.i("Fetching direction")
-//                        setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
-//                        Timber.i("Direction fetching completed.")
-//                    }
-                    resetCounting()
-                    return getStop(route_count, leg_count, step_count, point_count)
-                }
-            }
-            currentCount = nextCount.copyOf()
-            currentPoint = getStop(currentCount)
-            nextCount = incrementCounting(nextCount)
-            nextPoint = getStop(nextCount)
-        }
-//        runBlocking {
-//            Timber.i("Fetching direction")
-//            setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
-//            Timber.i("Direction fetching completed.")
+        Timber.i(BaseDestination.toString())
+        return BaseDestination
+//        var currentCount = intArrayOf(route_count, leg_count, step_count, point_count)
+//        var currentPoint = getStop(currentCount)
+//        var nextCount = incrementCounting(currentCount)
+//        var nextPoint = getStop(nextCount)
+//        val baseCount = currentCount.copyOf()
+//        while (!baseCount.contentEquals(nextCount)) {
+//            val result = FloatArray(1)
+//            android.location.Location.distanceBetween(
+//                currentPoint!!.latitude,
+//                currentPoint.longitude,
+//                nextPoint!!.latitude,
+//                nextPoint.longitude,
+//                result
+//            )
+//            val pointToPoint = result[0]
+//            val pointToHere = distanceTo(currentPoint)
+//            if (pointToHere <= pointToPoint) {
+//                val ratio = pointToHere / pointToPoint
+//                val midPoint = SphericalUtil.interpolate(currentPoint, nextPoint, ratio.toDouble())
+//                val offset = distanceTo(midPoint)
+//                if (offset <= minimumDistance || pointToHere < inDistance) {
+//                    route_count = currentCount[0]
+//                    leg_count = currentCount[1]
+//                    step_count = currentCount[2]
+//                    point_count = currentCount[3]
+////                    _stopCount.postValue(StopCount(route_count, leg_count, step_count, point_count))
+//                    _stopCount.value = StopCount(nextCount)
+//                    return nextPoint
+//                } else {
+//                    // TODO: find new direction
+//                    val prevCount =
+//                        decrementCounting(route_count, leg_count, step_count, point_count)
+//                    route_count = prevCount[0]
+//                    leg_count = prevCount[1]
+//                    step_count = prevCount[2]
+//                    point_count = prevCount[3]
+//                    _stopCount.value = StopCount(currentCount)
+//                    return currentPoint
+////                    runBlocking {
+////                        Timber.i("Fetching direction")
+////                        setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
+////                        Timber.i("Direction fetching completed.")
+////                    }
+//                    resetCounting()
+//                    return getStop(route_count, leg_count, step_count, point_count)
+//                }
+//            }
+//            currentCount = nextCount.copyOf()
+//            currentPoint = getStop(currentCount)
+//            nextCount = incrementCounting(nextCount)
+//            nextPoint = getStop(nextCount)
 //        }
-//        resetCounting()
-//        return getStop(route_count, leg_count, step_count, point_count)
-        return nextPoint
+////        runBlocking {
+////            Timber.i("Fetching direction")
+////            setDirection(getDirection(currentLocation.value?.toString() ?: "$manualLocation", destination))
+////            Timber.i("Direction fetching completed.")
+////        }
+////        resetCounting()
+////        return getStop(route_count, leg_count, step_count, point_count)
+//        return nextPoint
     }
 
 
