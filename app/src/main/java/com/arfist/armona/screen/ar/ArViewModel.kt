@@ -260,15 +260,15 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
         _arrowRotation.value = arrowRotationLocalNew.toEuler() + floatArrayOf(lastTimestamp.toFloat())
     }
 
-    private val _newDegree = MutableLiveData<Float>()
-    val newDegree: LiveData<Float>
+    private val _newDegree = MutableLiveData<FloatArray>()
+    val newDegree: LiveData<FloatArray>
         get() = _newDegree
 
     fun newDegreeCalculation() {
         val bearing = locationRepository.getBearingToNextPosition()
 //        val yawValue = myRotationVector.toEuler()[0] // yaw
         val yawValue = complementaryAngle.value!![0].RadToDeg() // yaw
-        _newDegree.value = bearing + yawValue
+        _newDegree.value = floatArrayOf(bearing + yawValue, complementaryAngle.value!![2].RadToDeg())
 //        Log.i("Degree ARVM", _newDegree.value.toString())
     }
 }

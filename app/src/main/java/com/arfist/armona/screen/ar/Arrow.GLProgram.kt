@@ -116,6 +116,22 @@ private fun calculateModelMatrixFromDegree(matrix: FloatArray, degree: Float) {
     }
 }
 
+private fun calculateModelMatrixFromDegree2(matrix: FloatArray, degree: FloatArray) {
+    matrix.apply {
+        Matrix.setIdentityM(this, 0) // think in reverse order
+        // last transform
+        Matrix.translateM(this, 0, 0f, 0.6f, 0f) // change arrow position
+//        Matrix.rotateM(this, 0, -90f + degree, 0f, 0f, 1f)
+//        Log.i("Degree draw", degree.toString())
+        Matrix.rotateM(this, 0, (-90+degree[1]), 1f, 0f, 0f)
+        Matrix.rotateM(this, 0, -90f-degree[0], 0f, 0f, 1f)
+        Matrix.translateM(this, 0, -0.1f, 0f, 0f) // change rotate origin
+        Matrix.rotateM(this, 0, 90f, 1f, 0f, 0f)
+        Matrix.scaleM(this, 0, .4f, .4f, .4f)
+        // first transform
+    }
+}
+
 private fun calculateModelMatrixFromQuaternion(matrix: FloatArray, quaternion: Quaternion) {
     Timber.i("mmQuat called")
     matrix.apply {
@@ -169,6 +185,11 @@ class ArrowGLProgram(arrowModel: ModelLoader.MeshGroup) {
         field = value
     }
 
+    var rotation2 = floatArrayOf(0f, 0f)
+    set(value) {
+        calculateModelMatrixFromDegree2(model_matrix, value)
+        field = value
+    }
 //    var quaternion = floatArrayOf(0f, 1f, 0f, 0f)
     var quaternion = Quaternion()
     set(value) {
