@@ -178,25 +178,30 @@ class ArFragment : Fragment() {
             mView.findNavController().navigate(ArFragmentDirections.actionArFragmentToMapFragment())
         }
 
-//        val locationText = view.findViewById<TextView>(R.id.Location)
+        val locationText = view.findViewById<TextView>(R.id.Location)
         val meterText = view.findViewById<TextView>(R.id.meter)
-//        val destinationText = view.findViewById<TextView>(R.id.Destination)
-
+        val destinationText = view.findViewById<TextView>(R.id.Destination)
+        val angleText = view.findViewById<TextView>(R.id.Angle)
+        val angleText2 = view.findViewById<TextView>(R.id.Angle2)
         sharedViewModel.lastLocation.observe(viewLifecycleOwner, {
             viewModel.setDistanceText()
-//            locationText.text = it.toString()
+            locationText.text = "current: $it"
             meterText.text = "${viewModel.distanceLeft()} metres left to next way point"
         })
 
         val stopText = view.findViewById<TextView>(R.id.stopPoint)
         viewModel.stopCount.observe(viewLifecycleOwner, {
             stopText.text = it.toString()
-//            destinationText.text = viewModel.getStop(it.array).toString()
+            destinationText.text = "destination: ${viewModel.getStop(it.countArray)}"
         })
         viewModel.gyroscope.observe(viewLifecycleOwner, {
             viewModel.getOrientation(it.timestamp)
         })
 
+        viewModel.newDegree.observe(viewLifecycleOwner, {
+            angleText.text = "yaw angle: ${(-90-it[0])}"
+            angleText2.text = "pitch angle: ${(-90+it[1])}"
+        })
         val glView = container.findViewById<GLView>(R.id.gl_view)
         glController = GLController(viewModel, viewLifecycleOwner, glView)
 

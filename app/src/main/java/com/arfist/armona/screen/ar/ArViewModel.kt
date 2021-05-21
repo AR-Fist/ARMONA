@@ -85,7 +85,6 @@ class ArViewModel(application: Application) : AndroidViewModel(application) {
 
     val stopCount = locationRepository.stopCount
     val currentLocation = locationRepository.currentLocation
-
     // Base sensors
     val accelerometer = sensorsRepository.accelerometer
     val gyroscope = sensorsRepository.gyroscope
